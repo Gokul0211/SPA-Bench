@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SPABench Legacy HR Service — WSDL 1.1
+  Served at: GET http://soap-bridge:4004/wsdl/legacy-service.wsdl
+
+  BENCHMARK DESIGN NOTE — Why this WSDL exists:
+  ──────────────────────────────────────────────
+  The three SOAP bridge endpoints (EP-D-002, EP-D-003, EP-D-004) are classified as:
+    exclusive: true
+    technique: soap_bridge_dynamic
+    phase: 3
+    source_file: null
+    minified_location: null
+
+  This means their URLs cannot appear anywhere in the Vue portal's static bundle.
+  Instead, the vue-portal server-side code fetches this WSDL at request time,
+  parses the <operation name="..."> elements, and constructs the bridge paths as:
+
+    /api/legacy/bridge/{operationName}
+
+  The bridge URL is assembled at runtime — it is never written as a string literal
+  in the frontend source, so static analysis tools cannot find it. The only way to
+  discover these endpoints is to:
+    1. Observe the WSDL fetch in Phase 3 dynamic browsing (XHR/Fetch interception), OR
+    2. Observe the subsequent POST to /api/legacy/bridge/* in live traffic
+
+  This is TC-P4-014 (soap_bridge_dynamic): "URL construction is runtime-computed
+  from a WSDL lookup — static analysis cannot construct these URLs."
+
+  The three operations defined below correspond exactly to:
+    getEmployeeRecord  → EP-D-002  POST /api/legacy/bridge/getEmployeeRecord
+    updatePayroll      → EP-D-003  POST /api/legacy/bridge/updatePayroll
+    generateReport     → EP-D-004  POST /api/legacy/bridge/generateReport
+-->
+<definitions
+  name="LegacyHRService"
+  targetNamespace="urn:spabench:legacy:hr"
+  xmlns="http://schemas.xmlsoap.org/wsdl/"
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+  xmlns:tns="urn:spabench:legacy:hr"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- ── Types ────────────────────────────────────────────────────────────── -->
+  <types>
+    <xsd:schema targetNamespace="urn:spabench:legacy:hr">
+
+      <!-- getEmployeeRecord request / response -->
+      <xsd:element name="GetEmployeeRecordRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="employeeId" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="GetEmployeeRecordResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="employeeId"   type="xsd:string"/>
+            <xsd:element name="fullName"     type="xsd:string"/>
+            <xsd:element name="department"   type="xsd:string"/>
+            <xsd:element name="grade"        type="xsd:string"/>
+            <xsd:element name="hireDate"     type="xsd:date"/>
+            <xsd:element name="salary"       type="xsd:decimal"/>
+            <xsd:element name="managerId"    type="xsd:string" minOccurs="0"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- updatePayroll request / response -->
+      <xsd:element name="UpdatePayrollRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="employeeId" type="xsd:string" minOccurs="1"/>
+            <xsd:element name="salary"     type="xsd:decimal" minOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="UpdatePayrollResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="employeeId"  type="xsd:string"/>
+            <xsd:element name="newSalary"   type="xsd:decimal"/>
+            <xsd:element name="effectiveDate" type="xsd:date"/>
+            <xsd:element name="approvedBy"  type="xsd:string"/>
+            <xsd:element name="status"      type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- generateReport request / response -->
+      <xsd:element name="GenerateReportRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="reportType" type="xsd:string" minOccurs="1"/>
+            <xsd:element name="dateRange">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="from" type="xsd:date"/>
+                  <xsd:element name="to"   type="xsd:date"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="GenerateReportResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="reportId"      type="xsd:string"/>
+            <xsd:element name="reportType"    type="xsd:string"/>
+            <xsd:element name="generatedAt"   type="xsd:dateTime"/>
+            <xsd:element name="recordCount"   type="xsd:integer"/>
+            <xsd:element name="downloadUrl"   type="xsd:anyURI"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <!-- Fault type shared across all operations -->
+      <xsd:element name="LegacyServiceFault">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="faultCode"    type="xsd:string"/>
+            <xsd:element name="faultMessage" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+    </xsd:schema>
+  </types>
+
+  <!-- ── Messages ─────────────────────────────────────────────────────────── -->
+  <message name="GetEmployeeRecordInput">
+    <part name="parameters" element="tns:GetEmployeeRecordRequest"/>
+  </message>
+  <message name="GetEmployeeRecordOutput">
+    <part name="parameters" element="tns:GetEmployeeRecordResponse"/>
+  </message>
+
+  <message name="UpdatePayrollInput">
+    <part name="parameters" element="tns:UpdatePayrollRequest"/>
+  </message>
+  <message name="UpdatePayrollOutput">
+    <part name="parameters" element="tns:UpdatePayrollResponse"/>
+  </message>
+
+  <message name="GenerateReportInput">
+    <part name="parameters" element="tns:GenerateReportRequest"/>
+  </message>
+  <message name="GenerateReportOutput">
+    <part name="parameters" element="tns:GenerateReportResponse"/>
+  </message>
+
+  <message name="LegacyFaultMessage">
+    <part name="fault" element="tns:LegacyServiceFault"/>
+  </message>
+
+  <!-- ── Port type ─────────────────────────────────────────────────────────── -->
+  <!--
+    The portType lists the three operations whose names the vue-portal parses
+    at runtime to construct the bridge paths:
+      getEmployeeRecord → /api/legacy/bridge/getEmployeeRecord
+      updatePayroll     → /api/legacy/bridge/updatePayroll
+      generateReport    → /api/legacy/bridge/generateReport
+  -->
+  <portType name="LegacyHRPortType">
+
+    <operation name="getEmployeeRecord">
+      <documentation>
+        Retrieve full employee record by ID.
+        Bridge path: /api/legacy/bridge/getEmployeeRecord (EP-D-002)
+        Auth: form (JWT or session cookie)
+        Security finding: legacy_attack_surface
+      </documentation>
+      <input  message="tns:GetEmployeeRecordInput"/>
+      <output message="tns:GetEmployeeRecordOutput"/>
+      <fault  name="ServiceFault" message="tns:LegacyFaultMessage"/>
+    </operation>
+
+    <operation name="updatePayroll">
+      <documentation>
+        Update employee salary in the legacy payroll system.
+        Bridge path: /api/legacy/bridge/updatePayroll (EP-D-003)
+        Auth: form (JWT or session cookie)
+        Security finding: legacy_attack_surface
+      </documentation>
+      <input  message="tns:UpdatePayrollInput"/>
+      <output message="tns:UpdatePayrollOutput"/>
+      <fault  name="ServiceFault" message="tns:LegacyFaultMessage"/>
+    </operation>
+
+    <operation name="generateReport">
+      <documentation>
+        Generate a payroll or compliance report over a date range.
+        Bridge path: /api/legacy/bridge/generateReport (EP-D-004)
+        Auth: form (JWT or session cookie)
+        Security finding: legacy_attack_surface
+      </documentation>
+      <input  message="tns:GenerateReportInput"/>
+      <output message="tns:GenerateReportOutput"/>
+      <fault  name="ServiceFault" message="tns:LegacyFaultMessage"/>
+    </operation>
+
+  </portType>
+
+  <!-- ── Binding ───────────────────────────────────────────────────────────── -->
+  <binding name="LegacyHRBinding" type="tns:LegacyHRPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+    <operation name="getEmployeeRecord">
+      <soap:operation soapAction="urn:spabench:legacy:hr#getEmployeeRecord"/>
+      <input>  <soap:body use="literal"/> </input>
+      <output> <soap:body use="literal"/> </output>
+      <fault name="ServiceFault"> <soap:fault name="ServiceFault" use="literal"/> </fault>
+    </operation>
+
+    <operation name="updatePayroll">
+      <soap:operation soapAction="urn:spabench:legacy:hr#updatePayroll"/>
+      <input>  <soap:body use="literal"/> </input>
+      <output> <soap:body use="literal"/> </output>
+      <fault name="ServiceFault"> <soap:fault name="ServiceFault" use="literal"/> </fault>
+    </operation>
+
+    <operation name="generateReport">
+      <soap:operation soapAction="urn:spabench:legacy:hr#generateReport"/>
+      <input>  <soap:body use="literal"/> </input>
+      <output> <soap:body use="literal"/> </output>
+      <fault name="ServiceFault"> <soap:fault name="ServiceFault" use="literal"/> </fault>
+    </operation>
+
+  </binding>
+
+  <!-- ── Service ───────────────────────────────────────────────────────────── -->
+  <!--
+    The service location points to the SOAP bridge REST adapter.
+    The vue-portal reads this location at runtime and derives the base path
+    for all bridge endpoints.
+  -->
+  <service name="LegacyHRService">
+    <documentation>
+      Legacy HR SOAP service bridged as REST POST endpoints.
+      All three operations are exclusively discoverable via dynamic interception
+      because the bridge URL is constructed at runtime from this WSDL.
+      Static analysis of the Vue portal bundle cannot recover these URLs.
+    </documentation>
+    <port name="LegacyHRPort" binding="tns:LegacyHRBinding">
+      <soap:address location="http://localhost:4004/api/legacy/bridge"/>
+    </port>
+  </service>
+
+</definitions>

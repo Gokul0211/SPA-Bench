@@ -1,0 +1,2 @@
+var mfeInventory;(()=>{"use strict";mfeInventory={"InventoryModule":()=>import("./main.js").then(m=>m.InventoryModule),"InventoryService":()=>import("./main.js").then(m=>m.InventoryService)};})();
+//# sourceMappingURL=remoteEntry.js.map

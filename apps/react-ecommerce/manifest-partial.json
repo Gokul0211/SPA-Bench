@@ -1,0 +1,605 @@
+{
+  "app_id": "react-ecommerce",
+  "framework": "React 18 + Vite (bearer-auth)",
+  "frontend_port": 3003,
+  "backend_port": 3003,
+  "auth_server_port": 4001,
+  "endpoint_count": 20,
+  "endpoints": [
+    {
+      "id": "EP-C-001",
+      "url": "http://localhost:3003/api/v2/products/{id}",
+      "method": "GET",
+      "phase": "2",
+      "technique": "template_literal_resolved",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "include",
+          "location": "query",
+          "type": "reviews | variants | all",
+          "required": false
+        }
+      ],
+      "source_file": "src/services/ProductService.tsx",
+      "minified_location": "assets/index.abc123.js:1:18200",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": false,
+      "auth_method": "none",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-002",
+      "url": "http://localhost:3003/api/v2/products/list",
+      "method": "GET",
+      "phase": "2",
+      "technique": "url_concat_direct",
+      "exclusive": false,
+      "redundant_techniques": [
+        "fetch_interception"
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "location": "query",
+          "type": "number",
+          "required": false
+        },
+        {
+          "name": "limit",
+          "location": "query",
+          "type": "number",
+          "required": false
+        },
+        {
+          "name": "category",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "source_file": "src/services/ProductService.tsx",
+      "minified_location": "assets/index.abc123.js:1:18500",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": false,
+      "auth_method": "none",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-003",
+      "url": "http://localhost:3003/checkout/process",
+      "method": "POST",
+      "phase": "2",
+      "technique": "lazy_chunk_import",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "cartId",
+          "location": "body",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "paymentMethod",
+          "location": "body",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "billingAddress",
+          "location": "body",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "source_file": "micro-apps/checkout-flow/services/CheckoutService.ts",
+      "minified_location": "assets/checkout.chunk.js:1:3200",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-004",
+      "url": "http://localhost:3003/api/v2/recommendations",
+      "method": "GET",
+      "phase": "3",
+      "technique": "service_worker_intercept",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [],
+      "source_file": "recommendation.worker.js",
+      "minified_location": "recommendation.worker.js:1:120",
+      "confidence_tier": "RUNTIME_VERIFIED",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-005",
+      "url": "http://localhost:3003/api/v2/products",
+      "method": "GET",
+      "phase": "2",
+      "technique": "ts_service_file_recovery",
+      "exclusive": false,
+      "redundant_techniques": [
+        "fetch_interception"
+      ],
+      "parameters": [
+        {
+          "name": "search",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "source_file": "src/services/ProductService.tsx",
+      "minified_location": "assets/index.abc123.js:1:19000",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": false,
+      "auth_method": "none",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-006",
+      "url": "http://localhost:3003/api/v2/products",
+      "method": "POST",
+      "phase": "2",
+      "technique": "ts_service_file_recovery",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "name",
+          "location": "body",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "price",
+          "location": "body",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "categoryId",
+          "location": "body",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "stock",
+          "location": "body",
+          "type": "number",
+          "required": true
+        }
+      ],
+      "source_file": "src/services/ProductService.tsx",
+      "minified_location": "assets/index.abc123.js:1:19500",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-007",
+      "url": "http://localhost:3003/api/v2/products/{id}",
+      "method": "PUT",
+      "phase": "2",
+      "technique": "ts_service_file_recovery",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "price",
+          "location": "body",
+          "type": "number",
+          "required": false
+        }
+      ],
+      "source_file": "src/services/ProductService.tsx",
+      "minified_location": "assets/index.abc123.js:1:20100",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-008",
+      "url": "http://localhost:3003/api/v2/products/{id}",
+      "method": "DELETE",
+      "phase": "2",
+      "technique": "ts_service_file_recovery",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "source_file": "src/services/ProductService.tsx",
+      "minified_location": "assets/index.abc123.js:1:20600",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-009",
+      "url": "http://localhost:3003/api/v2/orders",
+      "method": "GET",
+      "phase": "3",
+      "technique": "fetch_interception",
+      "exclusive": false,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "userId",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "source_file": "src/services/OrderService.tsx",
+      "minified_location": "assets/index.abc123.js:1:21000",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-010",
+      "url": "http://localhost:3003/api/v2/orders/{id}",
+      "method": "GET",
+      "phase": "2",
+      "technique": "template_literal_resolved",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "source_file": "src/services/OrderService.tsx",
+      "minified_location": "assets/index.abc123.js:1:21500",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-011",
+      "url": "http://localhost:3003/api/v2/orders",
+      "method": "POST",
+      "phase": "3",
+      "technique": "fetch_interception",
+      "exclusive": false,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "items",
+          "location": "body",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "shippingAddress",
+          "location": "body",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "source_file": "src/services/OrderService.tsx",
+      "minified_location": "assets/index.abc123.js:1:22000",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-012",
+      "url": "http://localhost:3003/api/v2/orders/{id}/status",
+      "method": "PATCH",
+      "phase": "2",
+      "technique": "ts_service_file_recovery",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "status",
+          "location": "body",
+          "type": "PENDING | SHIPPED | DELIVERED | CANCELLED",
+          "required": true
+        }
+      ],
+      "source_file": "src/services/OrderService.tsx",
+      "minified_location": "assets/index.abc123.js:1:22500",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-013",
+      "url": "http://localhost:3003/api/v2/users/me",
+      "method": "GET",
+      "phase": "3",
+      "technique": "fetch_interception",
+      "exclusive": false,
+      "redundant_techniques": [],
+      "parameters": [],
+      "source_file": "src/services/UserService.tsx",
+      "minified_location": "assets/index.abc123.js:1:23000",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-014",
+      "url": "http://localhost:3003/api/v2/users/me",
+      "method": "PUT",
+      "phase": "2",
+      "technique": "ts_service_file_recovery",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "displayName",
+          "location": "body",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "email",
+          "location": "body",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "source_file": "src/services/UserService.tsx",
+      "minified_location": "assets/index.abc123.js:1:23500",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-015",
+      "url": "http://localhost:3003/api/v2/cart/{id}",
+      "method": "DELETE",
+      "phase": "2",
+      "technique": "ts_service_file_recovery",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "source_file": "src/services/CartService.tsx",
+      "minified_location": "assets/checkout.chunk.js:1:4000",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-016",
+      "url": "http://localhost:3003/api/v2/reviews",
+      "method": "GET",
+      "phase": "2",
+      "technique": "url_concat_direct",
+      "exclusive": false,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "productId",
+          "location": "query",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "source_file": "src/components/ProductCatalog.tsx",
+      "minified_location": "assets/index.abc123.js:1:24000",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": false,
+      "auth_method": "none",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-017",
+      "url": "http://localhost:3003/api/v2/reviews",
+      "method": "POST",
+      "phase": "3",
+      "technique": "fetch_interception",
+      "exclusive": false,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "productId",
+          "location": "body",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "rating",
+          "location": "body",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "comment",
+          "location": "body",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "source_file": "src/components/ProductCatalog.tsx",
+      "minified_location": "assets/index.abc123.js:1:24500",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": false,
+      "security_finding_type": "none",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-018",
+      "url": "http://localhost:3003/api/v2/admin/products",
+      "method": "GET",
+      "phase": "2",
+      "technique": "url_array_assembly",
+      "exclusive": false,
+      "redundant_techniques": [
+        "fetch_interception"
+      ],
+      "parameters": [],
+      "source_file": "src/services/AdminService.tsx",
+      "minified_location": "assets/index.abc123.js:1:25000",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": true,
+      "security_finding_type": "ADMIN_PANEL",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-019",
+      "url": "http://localhost:3003/api/v2/admin/products",
+      "method": "POST",
+      "phase": "2",
+      "technique": "ts_service_file_recovery",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "name",
+          "location": "body",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "featured",
+          "location": "body",
+          "type": "boolean",
+          "required": true
+        }
+      ],
+      "source_file": "src/services/AdminService.tsx",
+      "minified_location": "assets/index.abc123.js:1:25500",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": true,
+      "security_finding_type": "ADMIN_PANEL",
+      "noise_source": false,
+      "discovery_notes": ""
+    },
+    {
+      "id": "EP-C-020",
+      "url": "http://localhost:3003/api/v2/admin/products/{id}",
+      "method": "DELETE",
+      "phase": "2",
+      "technique": "ts_service_file_recovery",
+      "exclusive": true,
+      "redundant_techniques": [],
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "source_file": "src/services/AdminService.tsx",
+      "minified_location": "assets/index.abc123.js:1:26000",
+      "confidence_tier": "BACKEND_API",
+      "auth_required": true,
+      "auth_method": "bearer",
+      "security_relevant": true,
+      "security_finding_type": "ADMIN_PANEL",
+      "noise_source": false,
+      "discovery_notes": ""
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+(()=>{"use strict";var __webpack_modules__={};var __webpack_require__=function(id){var m={exports:{}};__webpack_modules__[id](m,m.exports,__webpack_require__);return m.exports;};__webpack_modules__[400]=function(m,e){"  CrmService";function CrmService(http){this.http=http;this.apiBase="http://localhost:3002";}CrmService.prototype.getCrm=function(){return this.http.get(this.apiBase+"/api/v2/crm/contacts");};e.CrmService=CrmService;};exports.CrmModule=__webpack_require__(400);})();
+//# sourceMappingURL=main.js.map

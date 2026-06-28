@@ -1,0 +1,1 @@
+{"version": 3, "file": "hooks-auth.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/hooks/useAuth.ts"], "sourcesContent": ["import { useState } from 'react';\nexport function useAuth() { return { token: null, login: async() => {}, logout: () => {} }; }\n"], "mappings": "AAAA", "names": []}

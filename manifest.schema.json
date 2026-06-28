@@ -1,0 +1,345 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SPABench Ground Truth Manifest",
+  "description": "Machine-readable ground truth for API endpoint discovery benchmark across obfuscated Single Page Applications.",
+  "type": "object",
+  "required": ["version", "generated", "apps"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Semantic version of the manifest (MAJOR.MINOR.PATCH)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "generated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of manifest generation"
+    },
+    "apps": {
+      "type": "array",
+      "description": "List of benchmark SPA applications",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/App" }
+    }
+  },
+  "definitions": {
+    "App": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "framework",
+        "framework_version",
+        "build_tool",
+        "port",
+        "source_maps_exposed",
+        "auth_required",
+        "endpoints"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable application identifier, e.g. angular-permit",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable application name"
+        },
+        "framework": {
+          "type": "string",
+          "enum": ["angular", "react", "vue", "nextjs"],
+          "description": "Frontend framework"
+        },
+        "framework_version": {
+          "type": "string",
+          "description": "Exact framework version, e.g. 8.0.0"
+        },
+        "build_tool": {
+          "type": "string",
+          "enum": ["angular-cli-webpack", "webpack5-module-federation", "vite", "nuxt", "nextjs-compiler"],
+          "description": "Build tool / bundler used"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 3000,
+          "maximum": 3999,
+          "description": "Local Docker port this application runs on"
+        },
+        "base_url": {
+          "type": "string",
+          "description": "Base URL for the running app, e.g. http://localhost:3001"
+        },
+        "source_maps_exposed": {
+          "type": "boolean",
+          "description": "Whether .map files are publicly accessible"
+        },
+        "source_map_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of accessible source map files"
+        },
+        "auth_required": {
+          "type": "boolean",
+          "description": "Whether the application requires authentication to access any endpoints"
+        },
+        "auth_method": {
+          "type": "string",
+          "enum": ["none", "form", "bearer", "totp", "browser_login"],
+          "description": "Primary auth method for this application"
+        },
+        "description": {
+          "type": "string",
+          "description": "Short description of the app's testing purpose"
+        },
+        "primary_challenges": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of primary discovery challenges this app tests"
+        },
+        "target_endpoint_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Expected total endpoint count (approximate, for documentation)"
+        },
+        "sub_applications": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Names of sub-applications or micro-frontends (if applicable)"
+        },
+        "endpoints": {
+          "type": "array",
+          "description": "Complete ground truth endpoint list for this application",
+          "items": { "$ref": "#/definitions/Endpoint" }
+        }
+      }
+    },
+    "Endpoint": {
+      "type": "object",
+      "required": [
+        "id",
+        "url",
+        "method",
+        "phase",
+        "technique",
+        "exclusive",
+        "parameters",
+        "confidence_tier",
+        "auth_required",
+        "auth_method",
+        "discovery_notes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique stable identifier. Format: EP-{APP_CODE}-{NUMBER} or EP-{APP_CODE}-{TYPE}-{NUMBER} for protocol-specific entries",
+          "pattern": "^EP-[A-Z](-[A-Z]+)?-\\d{3}$"
+        },
+        "url": {
+          "type": "string",
+          "description": "Full URL including path and any static query params. Path params use {paramName} syntax.",
+          "pattern": "^https?://|^wss?://"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "WS", "GRAPHQL"],
+          "description": "HTTP method. WS for WebSocket connections. GRAPHQL for resolver entries."
+        },
+        "phase": {
+          "type": "string",
+          "enum": ["1", "1.5", "2", "3", "4"],
+          "description": "Primary phase required for discovery"
+        },
+        "technique": {
+          "type": "string",
+          "description": "Specific technique tag within the phase. Must match controlled vocabulary in docs/TECHNIQUE_REFERENCE.md",
+          "enum": [
+            "script_tag_standard",
+            "html_attr_onclick",
+            "html_attr_ng_include",
+            "html_attr_formaction",
+            "link_preload",
+            "link_modulepreload",
+            "dynamic_import_inline",
+            "web_worker_constructor",
+            "noscript_tag",
+            "commented_script",
+            "module_federation_remote_entry",
+            "module_federation_html_parse",
+            "sourcemap_probe_standard",
+            "sourcemap_url_directive",
+            "ts_service_file_recovery",
+            "environment_ts_recovery",
+            "jsx_source_recovery",
+            "sourcemap_restricted",
+            "backend_sourcemap_recovery",
+            "auth_service_recovery",
+            "url_concat_direct",
+            "url_template_literal",
+            "url_variable_based",
+            "url_object_property_chain",
+            "url_service_method_delegation",
+            "url_array_assembly",
+            "url_conditional_feature_flag",
+            "inter_proc_constructor_single",
+            "inter_proc_constructor_multi",
+            "inter_proc_factory_return",
+            "obfuscated_string_array",
+            "inter_proc_cycle_detection",
+            "httpclient_get",
+            "httpclient_post",
+            "httpclient_put",
+            "httpclient_patch",
+            "httpclient_delete",
+            "httpclient_request_generic",
+            "fetch_api_native",
+            "axios_wrapper",
+            "vue_composition_axios",
+            "react_useeffect_fetch",
+            "param_ts_interface",
+            "param_generic_type_annotation",
+            "param_httpparams_chain",
+            "param_urlsearchparams",
+            "param_formgroup",
+            "param_backward_taint",
+            "inter_proc_constructor_injection",
+            "xhr_interception",
+            "fetch_interception",
+            "webpack_registry_unnavigated",
+            "dynamic_button_click",
+            "dynamic_menu_expand",
+            "dynamic_form_submit",
+            "dynamic_hover",
+            "lazy_loaded_chunk",
+            "dynamic_worker_blob",
+            "federation_runtime_manifest",
+            "websocket_connection_url",
+            "websocket_payload_sample",
+            "websocket_static",
+            "graphql_endpoint_heuristic",
+            "graphql_introspection",
+            "graphql_query_resolver",
+            "graphql_mutation_resolver",
+            "graphql_subscription_resolver",
+            "graphql_introspection_disabled",
+            "openapi_discovery",
+            "openapi_path_enumeration",
+            "spring_actuator_mappings",
+            "indexeddb_api_cache",
+            "indexeddb_config",
+            "indexeddb_session",
+            "backend_sourcemap_server_routes",
+            "soap_bridge_dynamic",
+            "noise_momentjs",
+            "noise_exceljs",
+            "noise_angular_compiler",
+            "noise_pdfjs",
+            "noise_nodejs_streams",
+            "noise_template_literal_artifacts",
+            "noise_react_component_names",
+            "noise_router_navigation",
+            "auth_form_login",
+            "auth_browser_driven",
+            "auth_totp_mfa",
+            "auth_bearer_injection",
+            "auth_gated_endpoint"
+          ]
+        },
+        "exclusive": {
+          "type": "boolean",
+          "description": "True if this endpoint is only discoverable via the specified technique. False if redundantly discoverable by multiple techniques."
+        },
+        "redundant_techniques": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Other technique tags that can also discover this endpoint. Empty array if exclusive: true."
+        },
+        "parameters": {
+          "type": "array",
+          "description": "All known request parameters for this endpoint",
+          "items": { "$ref": "#/definitions/Parameter" }
+        },
+        "source_file": {
+          "type": ["string", "null"],
+          "description": "Original TypeScript/JSX source file path relative to the app src/ directory. Null for server-side-only or runtime-computed endpoints."
+        },
+        "minified_location": {
+          "type": ["string", "null"],
+          "description": "Location in the minified bundle, format: filename:line:column. Null for GraphQL resolvers, SOAP bridges, or any endpoint not present in a static JS bundle.",
+          "pattern": "^.+\\.js:\\d+:\\d+$"
+        },
+        "confidence_tier": {
+          "type": "string",
+          "enum": ["VERIFIED_API", "BACKEND_API", "LOW_CONFIDENCE"],
+          "description": "Expected Bayesian scoring tier at score >= 55 threshold"
+        },
+        "auth_required": {
+          "type": "boolean",
+          "description": "Whether this specific endpoint requires authentication"
+        },
+        "auth_method": {
+          "type": "string",
+          "enum": ["none", "form", "bearer", "totp", "browser_login"],
+          "description": "Authentication method required to access this endpoint"
+        },
+        "discovery_notes": {
+          "type": "string",
+          "description": "Human-readable explanation of why this endpoint requires the specified technique and what makes it non-trivial to discover"
+        },
+        "security_relevant": {
+          "type": "boolean",
+          "description": "True if this entry represents a security-sensitive finding beyond simple endpoint enumeration (staging URLs, internal IPs, OAuth endpoints, etc.)"
+        },
+        "security_finding_type": {
+          "type": "string",
+          "enum": [
+            "staging_server_url",
+            "oauth_token_endpoint",
+            "internal_ip_address",
+            "admin_crud_endpoint",
+            "legacy_attack_surface",
+            "graphql_resolver_exposure",
+            "websocket_realtime_surface",
+            "none"
+          ],
+          "description": "Category of security-relevant finding, if applicable"
+        },
+        "noise_source": {
+          "type": "boolean",
+          "description": "True if this is a known vendor noise entry — used for false positive validation testing"
+        }
+      }
+    },
+    "Parameter": {
+      "type": "object",
+      "required": ["name", "location", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Parameter name as it appears in the request"
+        },
+        "location": {
+          "type": "string",
+          "enum": ["query", "body", "path", "header"],
+          "description": "Where in the request this parameter appears"
+        },
+        "type": {
+          "type": "string",
+          "description": "Data type, e.g. string, number, boolean, ID, DateTime, or a custom type name"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this parameter is mandatory for the request"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional notes on this parameter"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SPABench App A — Permit-to-Work</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- SPABench App A — Angular 8 Permit-to-Work SPA -->
+  <!-- Angular CLI build — Webpack bundled output -->
+  <!-- Port 3001 | Form auth (benchuser/benchpass, benchadmin/benchpass) -->
+
+  <app-root></app-root>
+
+  <!-- TC-P1-010 (commented_script): Legacy mobile module disabled pending security review.
+       Code is still bundled and all endpoints are callable. Phase 1 tools that parse
+       HTML comment content find the chunk URL and add it to the analysis queue. -->
+  <!-- <script src="/permit-mobile-legacy.js"></script> -->
+  <!-- Enable mobile module by removing the comment tags above -->
+
+  <!-- TC-P1-003 (html_attr_ng_include): Reports module template uses ng-include.
+       Phase 1 HTML attribute scanners find this chunk path before any JS executes. -->
+  <div ng-include="'/reports-module.js'" style="display:none" id="reports-preload"></div>
+
+  <!-- TC-P1-002 (html_attr_onclick): Admin panel loader.
+       Phase 1 finds the admin chunk URL from this HTML onclick attribute. -->
+  <button id="admin-panel-loader"
+          onclick="loadModule('/admin-chunk.js')"
+          style="display:none"
+          aria-hidden="true">Admin Panel</button>
+
+  <!-- TC-P1-004 (html_attr_formaction): Emergency stop — formaction bypasses Angular router.
+       Phase 1 attribute scanners find this API endpoint URL directly in HTML. -->
+  <form id="emergency-stop-form" method="POST" style="display:none">
+    <button type="submit"
+            formaction="/api/rc_permit/submitEmergencyStop"
+            id="emergency-stop-btn">EMERGENCY STOP</button>
+  </form>
+
+  <!-- TC-P1-007 (dynamic_import_inline): Admin chunk loaded via dynamic import() in
+       inline script. Phase 1 scans inline script content for import() calls. -->
+  <script>
+    document.addEventListener('DOMContentLoaded',function(){
+      var _r=localStorage.getItem('spabench_permit_role');
+      if(_r==='admin'){import('/admin-panel.chunk.js').then(function(m){if(m&&m.initAdmin)m.initAdmin()});}
+    });
+  </script>
+
+  <!-- Angular webpack runtime — TC-P1-001 (script_tag_standard) -->
+  <script>
+  // TC-AUTH-004: Pre-inject tokens so auth-gated endpoints fire on load
+  (function(){
+    var t = "spabench-bearer-token-dev";
+    try { sessionStorage.setItem("spabench_permit_token", t); } catch(e){}
+    try { sessionStorage.setItem("bench_bearer_token", t); } catch(e){}
+    // Set admin role so admin chunk import() fires (TC-P1-007)
+    try { localStorage.setItem("spabench_permit_role", "admin"); } catch(e){}
+  })();
+  </script>
+  <script src="runtime.js" defer></script>
+  <script src="polyfills.js" defer></script>
+  <script src="vendor.js" defer></script>
+  <script src="bundle.js" defer></script>
+
+</body>
+</html>

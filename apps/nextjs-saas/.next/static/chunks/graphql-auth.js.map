@@ -1,0 +1,1 @@
+{"version": 3, "file": "graphql-auth.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./graphql/auth.ts"], "sourcesContent": ["export function requireAuth(ctx: { token?: string }): void {\n  if (!ctx.token) throw new Error('UNAUTHENTICATED');\n}\n"], "mappings": "AAAA", "names": []}

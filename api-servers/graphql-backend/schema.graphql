@@ -1,0 +1,354 @@
+# SPABench GraphQL Schema
+#
+# Serves App E — Next.js SaaS Dashboard (port 3005 → graphql-backend:4002)
+#
+# Manifest coverage:
+#   EP-E-001        /graphql                         graphql_endpoint_heuristic
+#   EP-E-GQL-001    Query.getUser                    graphql_query_resolver
+#   EP-E-GQL-002    Query.listOrders                 graphql_query_resolver
+#   EP-E-GQL-003    Query.getProduct                 graphql_query_resolver
+#   EP-E-GQL-004    Query.searchProducts             graphql_query_resolver
+#   EP-E-GQL-005    Query.getDashboardMetrics        graphql_query_resolver
+#   EP-E-GQL-006    Query.getAuditLog                graphql_query_resolver
+#   EP-E-GQL-007    Query.listTeamMembers            graphql_query_resolver
+#   EP-E-GQL-008    Query.getBillingInfo             graphql_query_resolver
+#   EP-E-GQL-009    Mutation.createUser              graphql_mutation_resolver
+#   EP-E-GQL-010    Mutation.updateOrder             graphql_mutation_resolver
+#   EP-E-GQL-011    Mutation.deleteProduct           graphql_mutation_resolver
+#   EP-E-GQL-012    Mutation.processCheckout         graphql_mutation_resolver
+#   EP-E-GQL-013    Mutation.inviteTeamMember        graphql_mutation_resolver
+#   EP-E-GQL-014    Mutation.updateBilling           graphql_mutation_resolver
+#   EP-E-GQL-015    Subscription.orderStatusChanged  graphql_subscription_resolver
+#   EP-E-GQL-016    Subscription.dashboardMetricsUpdated  graphql_subscription_resolver
+#   EP-E-GQL-017    Subscription.teamActivityFeed    graphql_subscription_resolver
+#
+# Introspection: ENABLED — TC-P4-002 (graphql_introspection)
+# All 17 resolver signatures must be fully visible in __schema response.
+
+scalar DateTime
+
+# ── Enums ────────────────────────────────────────────────────────────────────
+
+"""
+Order lifecycle status — used in listOrders filter and orderStatusChanged subscription.
+"""
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+"""
+Time granularity for dashboard metrics aggregation.
+"""
+enum Granularity {
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+"""
+Workspace member role — controls permissions and filters listTeamMembers.
+"""
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+"""
+SaaS billing plan tiers.
+"""
+enum BillingPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+# ── Core Types ────────────────────────────────────────────────────────────────
+
+type User {
+  id: ID!
+  email: String!
+  username: String!
+  fullName: String!
+  role: Role!
+  workspaceId: ID!
+  createdAt: DateTime!
+  lastLoginAt: DateTime
+}
+
+type LineItem {
+  sku: String!
+  quantity: Int!
+  unitPrice: Float!
+  total: Float!
+}
+
+type Order {
+  id: ID!
+  userId: ID!
+  status: OrderStatus!
+  lineItems: [LineItem!]!
+  total: Float!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Review {
+  reviewId: ID!
+  rating: Int!
+  comment: String!
+  author: String!
+  date: String!
+}
+
+type Product {
+  id: ID!
+  sku: String!
+  name: String!
+  category: String!
+  price: Float!
+  stock: Int!
+  rating: Float!
+  reviewCount: Int!
+  description: String
+  reviews: [Review!]
+}
+
+type MetricDataPoint {
+  bucket: String!
+  revenue: Float!
+  users: Int!
+}
+
+type DashboardMetrics {
+  period: String!
+  granularity: Granularity
+  totalRevenue: Float!
+  activeUsers: Int!
+  newSignups: Int!
+  churnRate: Float!
+  mrr: Float!
+  conversionRate: Float!
+  timeSeries: [MetricDataPoint!]!
+  generatedAt: DateTime!
+}
+
+type AuditEntry {
+  id: ID!
+  resourceId: ID!
+  action: String!
+  performedBy: String!
+  details: String
+  timestamp: DateTime!
+}
+
+type TeamMember {
+  id: ID!
+  workspaceId: ID!
+  userId: ID!
+  email: String!
+  fullName: String!
+  role: Role!
+  joinedAt: DateTime!
+}
+
+type BillingInfo {
+  workspaceId: ID!
+  plan: BillingPlan!
+  status: String!
+  currentPeriodStart: DateTime!
+  currentPeriodEnd: DateTime!
+  monthlyAmount: Float!
+  seats: Int!
+  usedSeats: Int!
+}
+
+type ActivityEvent {
+  workspaceId: ID!
+  userId: ID!
+  action: String!
+  resourceType: String!
+  resourceId: ID!
+  timestamp: DateTime!
+}
+
+# ── Input Types ───────────────────────────────────────────────────────────────
+
+"""
+Input for createUser mutation (EP-E-GQL-009).
+"""
+input CreateUserInput {
+  email: String!
+  username: String!
+  fullName: String!
+  role: Role!
+  workspaceId: ID!
+}
+
+"""
+Input for updateOrder mutation (EP-E-GQL-010).
+"""
+input UpdateOrderInput {
+  status: OrderStatus
+  lineItems: [LineItemInput!]
+}
+
+input LineItemInput {
+  sku: String!
+  quantity: Int!
+  unitPrice: Float!
+}
+
+"""
+Payment method input for processCheckout mutation (EP-E-GQL-012).
+"""
+input PaymentInput {
+  type: String!
+  cardToken: String
+  billingAddress: AddressInput
+}
+
+input AddressInput {
+  line1: String!
+  line2: String
+  city: String!
+  postalCode: String!
+  country: String!
+}
+
+"""
+Filter input for searchProducts query (EP-E-GQL-004).
+"""
+input ProductFilter {
+  category: String
+  minPrice: Float
+  maxPrice: Float
+  inStock: Boolean
+}
+
+# ── Queries ───────────────────────────────────────────────────────────────────
+
+type Query {
+  """
+  EP-E-GQL-001 — getUser(id: ID!): User
+  Auth: bearer required.
+  Recoverable via introspection or user.resolver.ts source map.
+  """
+  getUser(id: ID!): User
+
+  """
+  EP-E-GQL-002 — listOrders(userId: ID!, status: OrderStatus, limit: Int): [Order]
+  Auth: bearer required.
+  All argument types recovered from introspection schema.
+  """
+  listOrders(userId: ID!, status: OrderStatus, limit: Int): [Order!]!
+
+  """
+  EP-E-GQL-003 — getProduct(id: ID!, includeReviews: Boolean): Product
+  Auth: none — public resolver.
+  """
+  getProduct(id: ID!, includeReviews: Boolean): Product
+
+  """
+  EP-E-GQL-004 — searchProducts(query: String!, filters: ProductFilter): [Product]
+  Auth: none — public resolver.
+  """
+  searchProducts(query: String!, filters: ProductFilter): [Product!]!
+
+  """
+  EP-E-GQL-005 — getDashboardMetrics(period: String!, granularity: Granularity): DashboardMetrics
+  Auth: bearer required.
+  """
+  getDashboardMetrics(period: String!, granularity: Granularity): DashboardMetrics
+
+  """
+  EP-E-GQL-006 — getAuditLog(resourceId: ID!, from: DateTime, to: DateTime): [AuditEntry]
+  Auth: bearer required.
+  """
+  getAuditLog(resourceId: ID!, from: DateTime, to: DateTime): [AuditEntry!]!
+
+  """
+  EP-E-GQL-007 — listTeamMembers(workspaceId: ID!, role: Role): [TeamMember]
+  Auth: bearer required.
+  """
+  listTeamMembers(workspaceId: ID!, role: Role): [TeamMember!]!
+
+  """
+  EP-E-GQL-008 — getBillingInfo(workspaceId: ID!): BillingInfo
+  Auth: bearer required.
+  """
+  getBillingInfo(workspaceId: ID!): BillingInfo
+}
+
+# ── Mutations ─────────────────────────────────────────────────────────────────
+
+type Mutation {
+  """
+  EP-E-GQL-009 — createUser(input: CreateUserInput!): User
+  Auth: bearer required. Exclusively discoverable via introspection.
+  """
+  createUser(input: CreateUserInput!): User!
+
+  """
+  EP-E-GQL-010 — updateOrder(id: ID!, input: UpdateOrderInput!): Order
+  Auth: bearer required. Exclusively discoverable via introspection.
+  """
+  updateOrder(id: ID!, input: UpdateOrderInput!): Order!
+
+  """
+  EP-E-GQL-011 — deleteProduct(id: ID!): Boolean
+  Auth: bearer required. Exclusively discoverable via introspection.
+  """
+  deleteProduct(id: ID!): Boolean!
+
+  """
+  EP-E-GQL-012 — processCheckout(cartId: ID!, paymentMethod: PaymentInput!): Order
+  Auth: bearer required. Exclusively discoverable via introspection.
+  """
+  processCheckout(cartId: ID!, paymentMethod: PaymentInput!): Order!
+
+  """
+  EP-E-GQL-013 — inviteTeamMember(workspaceId: ID!, email: String!, role: Role!): TeamMember
+  Auth: bearer required. Exclusively discoverable via introspection.
+  """
+  inviteTeamMember(workspaceId: ID!, email: String!, role: Role!): TeamMember!
+
+  """
+  EP-E-GQL-014 — updateBilling(workspaceId: ID!, plan: BillingPlan!): BillingInfo
+  Auth: bearer required. Exclusively discoverable via introspection.
+  """
+  updateBilling(workspaceId: ID!, plan: BillingPlan!): BillingInfo!
+}
+
+# ── Subscriptions ─────────────────────────────────────────────────────────────
+
+type Subscription {
+  """
+  EP-E-GQL-015 — orderStatusChanged(orderId: ID!): Order
+  Auth: bearer required. Exclusively discoverable via introspection.
+  Real-time order lifecycle events.
+  """
+  orderStatusChanged(orderId: ID!): Order!
+
+  """
+  EP-E-GQL-016 — dashboardMetricsUpdated(workspaceId: ID!): DashboardMetrics
+  Auth: bearer required. Exclusively discoverable via introspection.
+  Fires every 30 seconds with refreshed metrics.
+  """
+  dashboardMetricsUpdated(workspaceId: ID!): DashboardMetrics!
+
+  """
+  EP-E-GQL-017 — teamActivityFeed(workspaceId: ID!): ActivityEvent
+  Auth: bearer required. Exclusively discoverable via introspection.
+  Real-time team activity stream.
+  """
+  teamActivityFeed(workspaceId: ID!): ActivityEvent!
+}

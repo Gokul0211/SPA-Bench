@@ -1,0 +1,26 @@
+# ── Tools (build locally via _build_jsluice.py) ──────────────────────────────
+tools/
+
+# ── Output / frozen results ───────────────────────────────────────────────────
+output/
+
+# ── Agent/scanner scratch files ───────────────────────────────────────────────
+parameters.txt
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.Python
+
+# ── OS junk ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Env / secrets ─────────────────────────────────────────────────────────────
+.env
+.env.*
+*.log

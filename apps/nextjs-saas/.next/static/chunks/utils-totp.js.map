@@ -1,0 +1,1 @@
+{"version": 3, "file": "utils-totp.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/utils/totp.ts"], "sourcesContent": ["// TC-AUTH-003: TOTP MFA flow\n// Step 1: POST /api/auth/login\n// Step 2: POST /api/auth/mfa/verify\nexport function buildMfaPayload(token: string, sessionToken: string) { return { token, sessionToken }; }\n"], "mappings": "AAAA", "names": []}

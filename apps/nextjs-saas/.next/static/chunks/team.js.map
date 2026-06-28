@@ -1,0 +1,1 @@
+{"version": 3, "file": "team.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/pages/team.tsx"], "sourcesContent": ["export default function Team() { return <div>Team</div>; }\n"], "mappings": "AAAA", "names": []}

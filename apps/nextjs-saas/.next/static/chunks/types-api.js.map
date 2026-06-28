@@ -1,0 +1,1 @@
+{"version": 3, "file": "types-api.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/types/api.ts"], "sourcesContent": ["export interface ApiResponse<T> { data: T; status: number; }\nexport type Period = 'last_7d'|'last_30d'|'last_90d'|'last_365d';\n"], "mappings": "AAAA", "names": []}

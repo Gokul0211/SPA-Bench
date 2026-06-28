@@ -1,0 +1,13 @@
+{
+  "name": "nextjs-saas",
+  "version": "1.0.0",
+  "dependencies": {
+    "next": "14.0.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/react": "^19.0.0"
+  }
+}

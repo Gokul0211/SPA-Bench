@@ -1,0 +1,1 @@
+{"version": 3, "file": "context-auth.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/context/AuthContext.tsx"], "sourcesContent": ["import React from 'react';\nexport const AuthContext = React.createContext({ token: '' });\n"], "mappings": "AAAA", "names": []}

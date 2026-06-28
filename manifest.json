@@ -1,0 +1,3077 @@
+{
+  "version": "2.0",
+  "generated": "2026-06-24T04:22:44Z",
+  "total_endpoints": 108,
+  "apps": [
+    {
+      "id": "angular-permit",
+      "framework": "Angular 15 (Webpack, form-auth)",
+      "frontend_port": 3001,
+      "backend_port": 4001,
+      "endpoint_count": 22,
+      "endpoints": [
+        {
+          "id": "EP-A-001",
+          "url": "http://localhost:4001/api/rc_permit/getPermitType",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_concat_direct",
+          "exclusive": false,
+          "redundant_techniques": [
+            "ts_service_file_recovery",
+            "fetch_interception"
+          ],
+          "parameters": [],
+          "source_file": "src/app/services/permit.service.ts",
+          "minified_location": "bundle.js:1:84729",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-002",
+          "url": "http://localhost:4001/api/rc_permit/getWorkOrder",
+          "method": "GET",
+          "phase": "2",
+          "technique": "inter_proc_constructor_multi",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "workOrderId",
+              "location": "query",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/app/services/permit.service.ts",
+          "minified_location": "bundle.js:1:91032",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Base URL flows through 3 files."
+        },
+        {
+          "id": "EP-A-003",
+          "url": "http://localhost:4001/api/rc_permit/createPermit",
+          "method": "POST",
+          "phase": "2",
+          "technique": "param_ts_interface",
+          "exclusive": false,
+          "redundant_techniques": [
+            "ts_service_file_recovery"
+          ],
+          "parameters": [
+            {
+              "name": "workSiteId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "startDate",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "endDate",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "hazardLevel",
+              "location": "body",
+              "type": "LOW | MEDIUM | HIGH",
+              "required": true
+            },
+            {
+              "name": "supervisorId",
+              "location": "body",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "source_file": "src/app/services/permit.service.ts",
+          "minified_location": "bundle.js:1:93710",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-004",
+          "url": "http://localhost:4001/api/rc_permit/getPermitDetails",
+          "method": "GET",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "query",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/app/services/permit.service.ts",
+          "minified_location": "bundle.js:1:96200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-005",
+          "url": "https://staging-api.rc-permit.internal/v2",
+          "method": "GET",
+          "phase": "1.5",
+          "technique": "environment_ts_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "src/environments/environment.staging.ts",
+          "minified_location": "bundle.js:1:12000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": true,
+          "security_finding_type": "INTERNAL_HOSTNAME",
+          "noise_source": false,
+          "discovery_notes": "Staging internal hostname leaked via source map."
+        },
+        {
+          "id": "EP-A-006",
+          "url": "https://auth.rc-permit.internal/oauth/token",
+          "method": "POST",
+          "phase": "1.5",
+          "technique": "environment_ts_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "src/environments/environment.staging.ts",
+          "minified_location": "bundle.js:1:12500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": true,
+          "security_finding_type": "INTERNAL_HOSTNAME",
+          "noise_source": false,
+          "discovery_notes": "Internal OAuth endpoint leaked."
+        },
+        {
+          "id": "EP-A-007",
+          "url": "http://localhost:4001/api/admin/legacy-reports",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_array_assembly",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [],
+          "source_file": "src/app/services/admin.service.ts",
+          "minified_location": "bundle.js:1:101000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": "URL assembled from array segments."
+        },
+        {
+          "id": "EP-A-008",
+          "url": "http://localhost:4001/api/v1/orders",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_conditional_feature_flag",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "src/app/services/order.service.ts",
+          "minified_location": "bundle.js:1:105000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-009",
+          "url": "http://localhost:4001/api/v2/orders",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_conditional_feature_flag",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "src/app/services/order.service.ts",
+          "minified_location": "bundle.js:1:105200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-010",
+          "url": "http://localhost:4001/api/auth/login",
+          "method": "POST",
+          "phase": "2",
+          "technique": "auth_service_recovery",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [
+            {
+              "name": "username",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "password",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/app/services/auth.service.ts",
+          "minified_location": "bundle.js:1:108000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": true,
+          "security_finding_type": "AUTH_ENDPOINT",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-011",
+          "url": "http://localhost:4001/api/rc_permit/listPermits",
+          "method": "GET",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [
+            "ts_service_file_recovery"
+          ],
+          "parameters": [
+            {
+              "name": "status",
+              "location": "query",
+              "type": "OPEN | CLOSED | PENDING",
+              "required": false
+            },
+            {
+              "name": "page",
+              "location": "query",
+              "type": "number",
+              "required": false
+            }
+          ],
+          "source_file": "src/app/services/permit.service.ts",
+          "minified_location": "bundle.js:1:87500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Only triggered via /permits route."
+        },
+        {
+          "id": "EP-A-012",
+          "url": "http://localhost:4001/api/rc_permit/updatePermit",
+          "method": "PUT",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "hazardLevel",
+              "location": "body",
+              "type": "LOW | MEDIUM | HIGH",
+              "required": false
+            },
+            {
+              "name": "endDate",
+              "location": "body",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/app/services/permit.service.ts",
+          "minified_location": "bundle.js:1:94200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-013",
+          "url": "http://localhost:4001/api/rc_permit/cancelPermit",
+          "method": "DELETE",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "query",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/app/services/permit.service.ts",
+          "minified_location": "bundle.js:1:95100",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-014",
+          "url": "http://localhost:4001/api/rc_permit/approvePermit",
+          "method": "PATCH",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "approverNote",
+              "location": "body",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/app/services/permit.service.ts",
+          "minified_location": "bundle.js:1:95800",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-015",
+          "url": "http://localhost:4001/api/rc_permit/getAuditTrail",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_concat_direct",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "permitId",
+              "location": "query",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "from",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/app/services/audit.service.ts",
+          "minified_location": "bundle.js:1:99000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-016",
+          "url": "http://localhost:4001/api/rc_permit/uploadAttachment",
+          "method": "POST",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "permitId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "file",
+              "location": "body",
+              "type": "File",
+              "required": true
+            }
+          ],
+          "source_file": "src/app/services/attachment.service.ts",
+          "minified_location": "bundle.js:1:97500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-017",
+          "url": "http://localhost:4001/api/admin/users",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_array_assembly",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [],
+          "source_file": "src/app/services/admin.service.ts",
+          "minified_location": "bundle.js:1:102000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-018",
+          "url": "http://localhost:4001/api/admin/users",
+          "method": "POST",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "username",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "role",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/app/services/admin.service.ts",
+          "minified_location": "bundle.js:1:102800",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-019",
+          "url": "http://localhost:4001/api/admin/users/{id}",
+          "method": "DELETE",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/app/services/admin.service.ts",
+          "minified_location": "bundle.js:1:103600",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-020",
+          "url": "http://localhost:4001/api/v2/permits/{id}/approvals",
+          "method": "GET",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/app/services/approval.service.ts",
+          "minified_location": "bundle.js:1:98500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-021",
+          "url": "http://localhost:4001/api/v2/permits/search",
+          "method": "GET",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "q",
+              "location": "query",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "hazardLevel",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/app/components/permit-search.component.ts",
+          "minified_location": "bundle.js:1:88900",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-A-022",
+          "url": "http://localhost:4001/api/rc_permit/updateStatus",
+          "method": "PATCH",
+          "phase": "2",
+          "technique": "url_concat_direct",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "status",
+              "location": "body",
+              "type": "OPEN | CLOSED | PENDING",
+              "required": true
+            }
+          ],
+          "source_file": "src/app/services/permit.service.ts",
+          "minified_location": "bundle.js:1:96000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        }
+      ]
+    },
+    {
+      "id": "angular-erp",
+      "framework": "Angular 16 Module Federation (MFE)",
+      "frontend_port": 3002,
+      "backend_port": 3002,
+      "endpoint_count": 20,
+      "endpoints": [
+        {
+          "id": "EP-B-001",
+          "url": "http://localhost:3012/remoteEntry.js",
+          "method": "GET",
+          "phase": "1",
+          "technique": "module_federation_remote_entry",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "apps/angular-erp/shell/webpack.config.js",
+          "minified_location": "shell/main.js:1:1420",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-002",
+          "url": "http://localhost:3013/remoteEntry.js",
+          "method": "GET",
+          "phase": "1",
+          "technique": "module_federation_remote_entry",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "apps/angular-erp/shell/webpack.config.js",
+          "minified_location": "shell/main.js:1:1520",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-003",
+          "url": "http://localhost:3002/api/inventory/items",
+          "method": "GET",
+          "phase": "2",
+          "technique": "webpack_registry_unnavigated",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
+          "minified_location": "mfe-inventory/main.js:1:2100",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-004",
+          "url": "http://10.0.1.45:8080/internal/api/reports/annual",
+          "method": "GET",
+          "phase": "2",
+          "technique": "internal_ip_hardcoded",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "apps/angular-erp/mfe-admin/src/app/services/legacy-report.service.ts",
+          "minified_location": "mfe-admin/main.js:1:890",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": true,
+          "security_finding_type": "INTERNAL_IP",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-005",
+          "url": "http://localhost:3002/api/auth/login",
+          "method": "POST",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "username",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "password",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "apps/angular-erp/shell/src/app/services/auth.service.ts",
+          "minified_location": "shell/main.js:1:1800",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": true,
+          "security_finding_type": "AUTH_ENDPOINT",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-006",
+          "url": "http://localhost:3002/actuator/mappings",
+          "method": "GET",
+          "phase": "1",
+          "technique": "spring_actuator_probe",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": null,
+          "minified_location": null,
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-007",
+          "url": "http://localhost:3002/api/inventory/items/{id}",
+          "method": "GET",
+          "phase": "2",
+          "technique": "webpack_registry_unnavigated",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
+          "minified_location": "mfe-inventory/main.js:1:2300",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-008",
+          "url": "http://localhost:3002/api/inventory/items",
+          "method": "POST",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "name",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "sku",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "quantity",
+              "location": "body",
+              "type": "number",
+              "required": true
+            },
+            {
+              "name": "warehouseId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
+          "minified_location": "mfe-inventory/main.js:1:2500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-009",
+          "url": "http://localhost:3002/api/inventory/items/{id}",
+          "method": "PUT",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "quantity",
+              "location": "body",
+              "type": "number",
+              "required": false
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
+          "minified_location": "mfe-inventory/main.js:1:2700",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-010",
+          "url": "http://localhost:3002/api/inventory/items/{id}",
+          "method": "DELETE",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
+          "minified_location": "mfe-inventory/main.js:1:2900",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-011",
+          "url": "http://localhost:3002/api/inventory/categories",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_concat_direct",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
+          "minified_location": "mfe-inventory/main.js:1:3100",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-012",
+          "url": "http://localhost:3002/api/employees",
+          "method": "GET",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [
+            {
+              "name": "department",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-admin/src/app/services/employee.service.ts",
+          "minified_location": "mfe-admin/main.js:1:1200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-013",
+          "url": "http://localhost:3002/api/employees/{id}",
+          "method": "GET",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-admin/src/app/services/employee.service.ts",
+          "minified_location": "mfe-admin/main.js:1:1400",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-014",
+          "url": "http://localhost:3002/api/employees",
+          "method": "POST",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "name",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "department",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "role",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-admin/src/app/services/employee.service.ts",
+          "minified_location": "mfe-admin/main.js:1:1600",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-015",
+          "url": "http://localhost:3002/api/employees/{id}",
+          "method": "PUT",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "department",
+              "location": "body",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-admin/src/app/services/employee.service.ts",
+          "minified_location": "mfe-admin/main.js:1:1800",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-016",
+          "url": "http://localhost:3002/api/admin/users/{id}/role",
+          "method": "PATCH",
+          "phase": "2",
+          "technique": "url_array_assembly",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "role",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-admin/src/app/services/admin.service.ts",
+          "minified_location": "mfe-admin/main.js:1:2000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-017",
+          "url": "http://localhost:3002/api/reports/monthly",
+          "method": "GET",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "month",
+              "location": "query",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-admin/src/app/services/report.service.ts",
+          "minified_location": "mfe-admin/main.js:1:2200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-018",
+          "url": "http://localhost:3002/api/reports/generate",
+          "method": "POST",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "type",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "dateRange",
+              "location": "body",
+              "type": "object",
+              "required": true
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-admin/src/app/services/report.service.ts",
+          "minified_location": "mfe-admin/main.js:1:2400",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-019",
+          "url": "http://localhost:3002/api/admin/settings",
+          "method": "GET",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "apps/angular-erp/mfe-admin/src/app/services/admin.service.ts",
+          "minified_location": "mfe-admin/main.js:1:2600",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-B-020",
+          "url": "http://localhost:3002/api/admin/settings",
+          "method": "PUT",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "smtpHost",
+              "location": "body",
+              "type": "string",
+              "required": false
+            },
+            {
+              "name": "maxUploadSize",
+              "location": "body",
+              "type": "number",
+              "required": false
+            }
+          ],
+          "source_file": "apps/angular-erp/mfe-admin/src/app/services/admin.service.ts",
+          "minified_location": "mfe-admin/main.js:1:2800",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": ""
+        }
+      ]
+    },
+    {
+      "id": "react-ecommerce",
+      "framework": "React 18 + Vite (bearer-auth)",
+      "frontend_port": 3003,
+      "backend_port": 3003,
+      "endpoint_count": 20,
+      "endpoints": [
+        {
+          "id": "EP-C-001",
+          "url": "http://localhost:3003/api/v2/products/{id}",
+          "method": "GET",
+          "phase": "2",
+          "technique": "template_literal_resolved",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "include",
+              "location": "query",
+              "type": "reviews | variants | all",
+              "required": false
+            }
+          ],
+          "source_file": "src/services/ProductService.tsx",
+          "minified_location": "assets/index.abc123.js:1:18200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-002",
+          "url": "http://localhost:3003/api/v2/products/list",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_concat_direct",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [
+            {
+              "name": "page",
+              "location": "query",
+              "type": "number",
+              "required": false
+            },
+            {
+              "name": "limit",
+              "location": "query",
+              "type": "number",
+              "required": false
+            },
+            {
+              "name": "category",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/services/ProductService.tsx",
+          "minified_location": "assets/index.abc123.js:1:18500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-003",
+          "url": "http://localhost:3003/checkout/process",
+          "method": "POST",
+          "phase": "2",
+          "technique": "lazy_chunk_import",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "cartId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "paymentMethod",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "billingAddress",
+              "location": "body",
+              "type": "object",
+              "required": true
+            }
+          ],
+          "source_file": "micro-apps/checkout-flow/services/CheckoutService.ts",
+          "minified_location": "assets/checkout.chunk.js:1:3200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-004",
+          "url": "http://localhost:3003/api/v2/recommendations",
+          "method": "GET",
+          "phase": "3",
+          "technique": "service_worker_intercept",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "recommendation.worker.js",
+          "minified_location": "recommendation.worker.js:1:120",
+          "confidence_tier": "RUNTIME_VERIFIED",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-005",
+          "url": "http://localhost:3003/api/v2/products",
+          "method": "GET",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [
+            {
+              "name": "search",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/services/ProductService.tsx",
+          "minified_location": "assets/index.abc123.js:1:19000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-006",
+          "url": "http://localhost:3003/api/v2/products",
+          "method": "POST",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "name",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "price",
+              "location": "body",
+              "type": "number",
+              "required": true
+            },
+            {
+              "name": "categoryId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "stock",
+              "location": "body",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/ProductService.tsx",
+          "minified_location": "assets/index.abc123.js:1:19500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-007",
+          "url": "http://localhost:3003/api/v2/products/{id}",
+          "method": "PUT",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "price",
+              "location": "body",
+              "type": "number",
+              "required": false
+            }
+          ],
+          "source_file": "src/services/ProductService.tsx",
+          "minified_location": "assets/index.abc123.js:1:20100",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-008",
+          "url": "http://localhost:3003/api/v2/products/{id}",
+          "method": "DELETE",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/ProductService.tsx",
+          "minified_location": "assets/index.abc123.js:1:20600",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-009",
+          "url": "http://localhost:3003/api/v2/orders",
+          "method": "GET",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "userId",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/services/OrderService.tsx",
+          "minified_location": "assets/index.abc123.js:1:21000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-010",
+          "url": "http://localhost:3003/api/v2/orders/{id}",
+          "method": "GET",
+          "phase": "2",
+          "technique": "template_literal_resolved",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/OrderService.tsx",
+          "minified_location": "assets/index.abc123.js:1:21500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-011",
+          "url": "http://localhost:3003/api/v2/orders",
+          "method": "POST",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "items",
+              "location": "body",
+              "type": "array",
+              "required": true
+            },
+            {
+              "name": "shippingAddress",
+              "location": "body",
+              "type": "object",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/OrderService.tsx",
+          "minified_location": "assets/index.abc123.js:1:22000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-012",
+          "url": "http://localhost:3003/api/v2/orders/{id}/status",
+          "method": "PATCH",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "status",
+              "location": "body",
+              "type": "PENDING | SHIPPED | DELIVERED | CANCELLED",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/OrderService.tsx",
+          "minified_location": "assets/index.abc123.js:1:22500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-013",
+          "url": "http://localhost:3003/api/v2/users/me",
+          "method": "GET",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "src/services/UserService.tsx",
+          "minified_location": "assets/index.abc123.js:1:23000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-014",
+          "url": "http://localhost:3003/api/v2/users/me",
+          "method": "PUT",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "displayName",
+              "location": "body",
+              "type": "string",
+              "required": false
+            },
+            {
+              "name": "email",
+              "location": "body",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/services/UserService.tsx",
+          "minified_location": "assets/index.abc123.js:1:23500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-015",
+          "url": "http://localhost:3003/api/v2/cart/{id}",
+          "method": "DELETE",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/CartService.tsx",
+          "minified_location": "assets/checkout.chunk.js:1:4000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-016",
+          "url": "http://localhost:3003/api/v2/reviews",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_concat_direct",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "productId",
+              "location": "query",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/components/ProductCatalog.tsx",
+          "minified_location": "assets/index.abc123.js:1:24000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-017",
+          "url": "http://localhost:3003/api/v2/reviews",
+          "method": "POST",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "productId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "rating",
+              "location": "body",
+              "type": "number",
+              "required": true
+            },
+            {
+              "name": "comment",
+              "location": "body",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/components/ProductCatalog.tsx",
+          "minified_location": "assets/index.abc123.js:1:24500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-018",
+          "url": "http://localhost:3003/api/v2/admin/products",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_array_assembly",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [],
+          "source_file": "src/services/AdminService.tsx",
+          "minified_location": "assets/index.abc123.js:1:25000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-019",
+          "url": "http://localhost:3003/api/v2/admin/products",
+          "method": "POST",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "name",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "featured",
+              "location": "body",
+              "type": "boolean",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/AdminService.tsx",
+          "minified_location": "assets/index.abc123.js:1:25500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-C-020",
+          "url": "http://localhost:3003/api/v2/admin/products/{id}",
+          "method": "DELETE",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/AdminService.tsx",
+          "minified_location": "assets/index.abc123.js:1:26000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": ""
+        }
+      ]
+    },
+    {
+      "id": "vue-portal",
+      "framework": "Vue 3 + Nuxt (form-auth, SOAP bridge)",
+      "frontend_port": 3004,
+      "backend_port": 3004,
+      "endpoint_count": 18,
+      "endpoints": [
+        {
+          "id": "EP-D-001",
+          "url": "http://localhost:3004/api/users/{id}",
+          "method": "GET",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [
+            "ts_service_file_recovery"
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/UserService.ts",
+          "minified_location": "_nuxt/entry.js:1:8200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-002",
+          "url": "http://localhost:3004/api/legacy/bridge/getEmployeeRecord",
+          "method": "POST",
+          "phase": "2",
+          "technique": "soap_bridge_dynamic",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "employeeId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "_nuxt/entry.js",
+          "minified_location": "_nuxt/entry.js:1:15200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-003",
+          "url": "http://localhost:3004/api/legacy/bridge/updatePayroll",
+          "method": "POST",
+          "phase": "2",
+          "technique": "soap_bridge_dynamic",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "employeeId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "salary",
+              "location": "body",
+              "type": "number",
+              "required": true
+            }
+          ],
+          "source_file": "_nuxt/entry.js",
+          "minified_location": "_nuxt/entry.js:1:15600",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-004",
+          "url": "http://localhost:3004/api/legacy/bridge/generateReport",
+          "method": "POST",
+          "phase": "2",
+          "technique": "soap_bridge_dynamic",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "reportType",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "dateRange",
+              "location": "body",
+              "type": "object",
+              "required": true
+            }
+          ],
+          "source_file": "_nuxt/entry.js",
+          "minified_location": "_nuxt/entry.js:1:16000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-005",
+          "url": "http://localhost:3004/api/users",
+          "method": "GET",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [
+            {
+              "name": "department",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/services/UserService.ts",
+          "minified_location": "_nuxt/entry.js:1:9000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-006",
+          "url": "http://localhost:3004/api/users",
+          "method": "POST",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "username",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "email",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "department",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/UserService.ts",
+          "minified_location": "_nuxt/entry.js:1:9600",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-007",
+          "url": "http://localhost:3004/api/users/{id}",
+          "method": "PUT",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "email",
+              "location": "body",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/services/UserService.ts",
+          "minified_location": "_nuxt/entry.js:1:10200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-008",
+          "url": "http://localhost:3004/api/users/{id}",
+          "method": "DELETE",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/UserService.ts",
+          "minified_location": "_nuxt/entry.js:1:10800",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-009",
+          "url": "http://localhost:3004/api/users/{id}/status",
+          "method": "PATCH",
+          "phase": "2",
+          "technique": "url_concat_direct",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "status",
+              "location": "body",
+              "type": "ACTIVE | SUSPENDED | ARCHIVED",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/UserService.ts",
+          "minified_location": "_nuxt/entry.js:1:11200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-010",
+          "url": "http://localhost:3004/api/departments",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_concat_direct",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "src/services/DepartmentService.ts",
+          "minified_location": "_nuxt/entry.js:1:12000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-011",
+          "url": "http://localhost:3004/api/departments",
+          "method": "POST",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "name",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "managerId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/DepartmentService.ts",
+          "minified_location": "_nuxt/entry.js:1:12600",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-012",
+          "url": "http://localhost:3004/api/permits",
+          "method": "GET",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "status",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/services/PermitService.ts",
+          "minified_location": "_nuxt/entry.js:1:13000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-013",
+          "url": "http://localhost:3004/api/permits",
+          "method": "POST",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "type",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "userId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "validFrom",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/PermitService.ts",
+          "minified_location": "_nuxt/entry.js:1:13600",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-014",
+          "url": "http://localhost:3004/api/permits/{id}",
+          "method": "DELETE",
+          "phase": "2",
+          "technique": "ts_service_file_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/PermitService.ts",
+          "minified_location": "_nuxt/entry.js:1:14200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-015",
+          "url": "http://localhost:3004/api/documents/{id}",
+          "method": "GET",
+          "phase": "2",
+          "technique": "template_literal_resolved",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/DocumentService.ts",
+          "minified_location": "_nuxt/entry.js:1:17000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-016",
+          "url": "http://localhost:3004/api/documents/upload",
+          "method": "POST",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "file",
+              "location": "body",
+              "type": "File",
+              "required": true
+            },
+            {
+              "name": "permitId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/services/DocumentService.ts",
+          "minified_location": "_nuxt/entry.js:1:17600",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-017",
+          "url": "http://localhost:3004/api/audit-log",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_concat_direct",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "from",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/services/AuditService.ts",
+          "minified_location": "_nuxt/entry.js:1:18000",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-D-018",
+          "url": "http://localhost:3004/api/legacy/reports",
+          "method": "GET",
+          "phase": "2",
+          "technique": "url_concat_direct",
+          "exclusive": false,
+          "redundant_techniques": [
+            "ts_service_file_recovery"
+          ],
+          "parameters": [],
+          "source_file": "src/services/LegacyService.ts",
+          "minified_location": "_nuxt/entry.js:1:18500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "form",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": ""
+        }
+      ]
+    },
+    {
+      "id": "nextjs-saas",
+      "framework": "Next.js 14 (GraphQL + WS + REST)",
+      "frontend_port": 3005,
+      "backend_port": 3005,
+      "endpoint_count": 28,
+      "endpoints": [
+        {
+          "id": "EP-E-001",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_query_resolver",
+          "exclusive": false,
+          "redundant_techniques": [
+            "sourcemap_ts_recovery"
+          ],
+          "parameters": [
+            {
+              "name": "userId",
+              "location": "graphql_arg",
+              "type": "ID!",
+              "required": true
+            }
+          ],
+          "source_file": "src/graphql/resolvers/user.resolver.ts",
+          "minified_location": ".next/static/chunks/user.resolver.js:1:240",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Query getUser."
+        },
+        {
+          "id": "EP-E-002",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_mutation_resolver",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "input",
+              "location": "graphql_arg",
+              "type": "UpdateUserInput!",
+              "required": true
+            }
+          ],
+          "source_file": "src/graphql/resolvers/user.resolver.ts",
+          "minified_location": ".next/static/chunks/user.resolver.js:1:480",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Mutation updateUser."
+        },
+        {
+          "id": "EP-E-003",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_mutation_resolver",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "graphql_arg",
+              "type": "ID!",
+              "required": true
+            }
+          ],
+          "source_file": "src/graphql/resolvers/user.resolver.ts",
+          "minified_location": ".next/static/chunks/user.resolver.js:1:680",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Mutation deleteUser."
+        },
+        {
+          "id": "EP-E-004",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_query_resolver",
+          "exclusive": false,
+          "redundant_techniques": [
+            "sourcemap_ts_recovery"
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "graphql_arg",
+              "type": "ID!",
+              "required": true
+            }
+          ],
+          "source_file": "src/graphql/resolvers/order.resolver.ts",
+          "minified_location": ".next/static/chunks/order.resolver.js:1:240",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Query getOrder."
+        },
+        {
+          "id": "EP-E-005",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_mutation_resolver",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "input",
+              "location": "graphql_arg",
+              "type": "CreateOrderInput!",
+              "required": true
+            }
+          ],
+          "source_file": "src/graphql/resolvers/order.resolver.ts",
+          "minified_location": ".next/static/chunks/order.resolver.js:1:480",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Mutation createOrder."
+        },
+        {
+          "id": "EP-E-006",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_query_resolver",
+          "exclusive": false,
+          "redundant_techniques": [
+            "sourcemap_ts_recovery"
+          ],
+          "parameters": [
+            {
+              "name": "userId",
+              "location": "graphql_arg",
+              "type": "ID!",
+              "required": true
+            }
+          ],
+          "source_file": "src/graphql/resolvers/billing.resolver.ts",
+          "minified_location": ".next/static/chunks/billing.resolver.js:1:240",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Query getBillingInfo."
+        },
+        {
+          "id": "EP-E-007",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_mutation_resolver",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "input",
+              "location": "graphql_arg",
+              "type": "UpdateBillingInput!",
+              "required": true
+            }
+          ],
+          "source_file": "src/graphql/resolvers/billing.resolver.ts",
+          "minified_location": ".next/static/chunks/billing.resolver.js:1:480",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Mutation updateBillingInfo."
+        },
+        {
+          "id": "EP-E-008",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_query_resolver",
+          "exclusive": false,
+          "redundant_techniques": [
+            "sourcemap_ts_recovery"
+          ],
+          "parameters": [],
+          "source_file": "src/graphql/resolvers/dashboard.resolver.ts",
+          "minified_location": ".next/static/chunks/dashboard.resolver.js:1:240",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Query getDashboardMetrics."
+        },
+        {
+          "id": "EP-E-009",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_subscription_resolver",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "src/graphql/resolvers/dashboard.resolver.ts",
+          "minified_location": ".next/static/chunks/dashboard.resolver.js:1:720",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Subscription onMetricsUpdate."
+        },
+        {
+          "id": "EP-E-010",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_mutation_resolver",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "input",
+              "location": "graphql_arg",
+              "type": "AuditQueryInput!",
+              "required": true
+            }
+          ],
+          "source_file": "src/graphql/resolvers/audit.resolver.ts",
+          "minified_location": ".next/static/chunks/audit.resolver.js:1:240",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": true,
+          "security_finding_type": "ADMIN_PANEL",
+          "noise_source": false,
+          "discovery_notes": "Mutation queryAuditLog \u2014 admin-only."
+        },
+        {
+          "id": "EP-E-011",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_mutation_resolver",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "input",
+              "location": "graphql_arg",
+              "type": "CheckoutInput!",
+              "required": true
+            }
+          ],
+          "source_file": "src/graphql/resolvers/checkout.resolver.ts",
+          "minified_location": ".next/static/chunks/checkout.resolver.js:1:240",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Mutation processCheckout."
+        },
+        {
+          "id": "EP-E-012",
+          "url": "http://localhost:3005/api/graphql",
+          "method": "GRAPHQL",
+          "phase": "2",
+          "technique": "graphql_subscription_resolver",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "src/graphql/resolvers/team.resolver.ts",
+          "minified_location": ".next/static/chunks/team.resolver.js:1:480",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": "Subscription onTeamUpdate."
+        },
+        {
+          "id": "EP-E-013",
+          "url": "wss://localhost:3005/ws/live-dashboard",
+          "method": "WS",
+          "phase": "2",
+          "technique": "websocket_constructor_scan",
+          "exclusive": true,
+          "redundant_techniques": [
+            "sourcemap_ts_recovery"
+          ],
+          "parameters": [],
+          "source_file": "src/services/DashboardService.ts",
+          "minified_location": ".next/static/chunks/main.js:1:1800",
+          "confidence_tier": "RUNTIME_VERIFIED",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-014",
+          "url": "wss://localhost:3005/ws/notifications",
+          "method": "WS",
+          "phase": "2",
+          "technique": "websocket_constructor_scan",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "src/services/NotificationService.ts",
+          "minified_location": ".next/static/chunks/main.js:1:2900",
+          "confidence_tier": "RUNTIME_VERIFIED",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-015",
+          "url": "http://localhost:3005/api/dashboard/metrics",
+          "method": "GET",
+          "phase": "3",
+          "technique": "fetch_interception",
+          "exclusive": false,
+          "redundant_techniques": [
+            "sourcemap_ts_recovery"
+          ],
+          "parameters": [
+            {
+              "name": "period",
+              "location": "query",
+              "type": "7d | 30d | 90d",
+              "required": false
+            }
+          ],
+          "source_file": "src/services/DashboardService.ts",
+          "minified_location": ".next/static/chunks/main.js:1:1200",
+          "confidence_tier": "RUNTIME_VERIFIED",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-016",
+          "url": "http://localhost:3005/api/auth",
+          "method": "POST",
+          "phase": "1",
+          "technique": "link_modulepreload",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [
+            {
+              "name": "username",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "password",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/pages/api/auth.ts",
+          "minified_location": ".next/static/chunks/api-auth.js:1:100",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": false,
+          "auth_method": "none",
+          "security_relevant": true,
+          "security_finding_type": "AUTH_ENDPOINT",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-017",
+          "url": "http://localhost:3005/api/users",
+          "method": "GET",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [
+            {
+              "name": "role",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/pages/api/users.ts",
+          "minified_location": ".next/static/chunks/api-users.js:1:100",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-018",
+          "url": "http://localhost:3005/api/users/{id}",
+          "method": "GET",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/pages/api/users.ts",
+          "minified_location": ".next/static/chunks/api-users.js:1:300",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-019",
+          "url": "http://localhost:3005/api/users",
+          "method": "POST",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "name",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "email",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "role",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/pages/api/users.ts",
+          "minified_location": ".next/static/chunks/api-users.js:1:500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-020",
+          "url": "http://localhost:3005/api/users/{id}",
+          "method": "PUT",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "name",
+              "location": "body",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/pages/api/users.ts",
+          "minified_location": ".next/static/chunks/api-users.js:1:700",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-021",
+          "url": "http://localhost:3005/api/users/{id}",
+          "method": "DELETE",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/pages/api/users.ts",
+          "minified_location": ".next/static/chunks/api-users.js:1:900",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-022",
+          "url": "http://localhost:3005/api/orders",
+          "method": "GET",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "userId",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/pages/api/orders.ts",
+          "minified_location": ".next/static/chunks/api-dashboard.js:1:200",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-023",
+          "url": "http://localhost:3005/api/orders/{id}",
+          "method": "DELETE",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/pages/api/orders.ts",
+          "minified_location": ".next/static/chunks/api-dashboard.js:1:400",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-024",
+          "url": "http://localhost:3005/api/billing/invoices",
+          "method": "GET",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": false,
+          "redundant_techniques": [
+            "fetch_interception"
+          ],
+          "parameters": [
+            {
+              "name": "from",
+              "location": "query",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "source_file": "src/pages/api/billing.ts",
+          "minified_location": ".next/static/chunks/billing.js:1:100",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-025",
+          "url": "http://localhost:3005/api/billing/invoices",
+          "method": "POST",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "orderId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/pages/api/billing.ts",
+          "minified_location": ".next/static/chunks/billing.js:1:300",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-026",
+          "url": "http://localhost:3005/api/billing/invoices/{id}",
+          "method": "DELETE",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "id",
+              "location": "path",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/pages/api/billing.ts",
+          "minified_location": ".next/static/chunks/billing.js:1:500",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-027",
+          "url": "http://localhost:3005/api/team/members",
+          "method": "GET",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": false,
+          "redundant_techniques": [],
+          "parameters": [],
+          "source_file": "src/pages/api/team.ts",
+          "minified_location": ".next/static/chunks/team.resolver.js:1:100",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        },
+        {
+          "id": "EP-E-028",
+          "url": "http://localhost:3005/api/team/members",
+          "method": "POST",
+          "phase": "2",
+          "technique": "sourcemap_ts_recovery",
+          "exclusive": true,
+          "redundant_techniques": [],
+          "parameters": [
+            {
+              "name": "userId",
+              "location": "body",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "role",
+              "location": "body",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "source_file": "src/pages/api/team.ts",
+          "minified_location": ".next/static/chunks/team.resolver.js:1:300",
+          "confidence_tier": "BACKEND_API",
+          "auth_required": true,
+          "auth_method": "bearer",
+          "security_relevant": false,
+          "security_finding_type": "none",
+          "noise_source": false,
+          "discovery_notes": ""
+        }
+      ]
+    }
+  ],
+  "distribution": {
+    "GET": 45,
+    "POST": 25,
+    "PUT": 8,
+    "DELETE": 11,
+    "PATCH": 5,
+    "GRAPHQL": 12,
+    "WS": 2
+  },
+  "auth_gated_total": 96,
+  "security_relevant_total": 19
+}

@@ -1,0 +1,11 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SPABench E-Commerce</title><link rel="preload" href="/assets/checkout.chunk.js" as="script"></head><body><div id="root"></div><script type="module" src="/assets/index.abc123.js"></script>
+<script>
+// Auto-inject benchmark bearer token for auth-gated endpoints (TC-AUTH-004)
+(function(){
+  var t = "spabench-bearer-token-dev";
+  try { sessionStorage.setItem("bench_bearer_token", t); } catch(e){}
+  try { localStorage.setItem("bench_bearer_token", t); } catch(e){}
+})();
+</script>
+<script type="module" src="/assets/checkout.chunk.js"></script>
+</body></html>

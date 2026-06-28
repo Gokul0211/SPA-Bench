@@ -1,0 +1,1 @@
+{"version": 3, "file": "hooks-ws.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/hooks/useWebSocket.ts"], "sourcesContent": ["// WS_NOTIFICATIONS and WS_URL both used here\nexport function useWebSocket(url: string) { return { send: (m: any) => {} }; }\n"], "mappings": "AAAA", "names": []}

@@ -1,0 +1,345 @@
+version: "3.9"
+
+# ---------------------------------------------------------------------------
+# SPABench — Docker Compose
+# All benchmark applications + API servers
+# ---------------------------------------------------------------------------
+#
+# Quick start:
+#   docker compose up -d
+#   docker compose ps
+#   python sanity_check.py --manifest manifest.json --base-url http://localhost
+#
+# Start individual apps:
+#   docker compose up -d angular-permit rest-backend
+#   docker compose up -d nextjs-saas graphql-backend websocket-backend
+#
+# Port map:
+#   3001 — App A: angular-permit
+#   3002 — App B: angular-erp (shell)
+#   3011 — App B: mfe-inventory
+#   3012 — App B: mfe-orders
+#   3013 — App B: mfe-users
+#   3014 — App B: mfe-reports
+#   3015 — App B: mfe-finance
+#   3016 — App B: mfe-hr
+#   3017 — App B: mfe-crm
+#   3018 — App B: mfe-analytics
+#   3003 — App C: react-ecommerce
+#   3004 — App D: vue-portal
+#   3005 — App E: nextjs-saas
+#   4001 — REST backend (shared)
+#   4002 — GraphQL backend (Apollo)
+#   4003 — WebSocket backend
+#   4004 — SOAP bridge (legacy)
+#   4005 — Auth service
+
+# ---------------------------------------------------------------------------
+# Shared network
+# ---------------------------------------------------------------------------
+networks:
+  spabench:
+    driver: bridge
+
+# ---------------------------------------------------------------------------
+# Shared environment
+# ---------------------------------------------------------------------------
+x-common-env: &common-env
+  NODE_ENV: development
+  BENCH_AUTH_SECRET: spabench-dev-secret-do-not-use-in-production
+  BENCH_TOTP_SECRET: JBSWY3DPEHPK3PXP
+  BENCH_BEARER_TOKEN: spabench-bearer-token-dev
+
+# ---------------------------------------------------------------------------
+# Services
+# ---------------------------------------------------------------------------
+services:
+
+  # ── API Backends ──────────────────────────────────────────────────────────
+
+  rest-backend:
+    build:
+      context: ./api-servers/rest-backend
+      dockerfile: Dockerfile
+    container_name: spabench-rest-backend
+    networks: [spabench]
+    ports:
+      - "4001:4001"
+    environment:
+      <<: *common-env
+      PORT: 4001
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  graphql-backend:
+    build:
+      context: ./api-servers/graphql-backend
+      dockerfile: Dockerfile
+    container_name: spabench-graphql-backend
+    networks: [spabench]
+    ports:
+      - "4002:4002"
+    environment:
+      <<: *common-env
+      PORT: 4002
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  websocket-backend:
+    build:
+      context: ./api-servers/websocket-backend
+      dockerfile: Dockerfile
+    container_name: spabench-websocket-backend
+    networks: [spabench]
+    ports:
+      - "4003:4003"
+    environment:
+      <<: *common-env
+      PORT: 4003
+
+  soap-bridge:
+    build:
+      context: ./api-servers/soap-bridge
+      dockerfile: Dockerfile
+    container_name: spabench-soap-bridge
+    networks: [spabench]
+    ports:
+      - "4004:4004"
+    environment:
+      <<: *common-env
+      PORT: 4004
+
+  # ── App A — Angular Permit ────────────────────────────────────────────────
+
+  angular-permit:
+    build:
+      context: ./apps/angular-permit
+      dockerfile: Dockerfile
+    container_name: spabench-angular-permit
+    networks: [spabench]
+    ports:
+      - "3001:3001"
+    environment:
+      <<: *common-env
+      PORT: 3001
+      API_BASE_URL: http://rest-backend:4001
+    depends_on:
+      rest-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ── App B — Angular ERP (Module Federation) ───────────────────────────────
+
+  angular-erp:
+    build:
+      context: ./apps/angular-erp
+      dockerfile: Dockerfile
+      target: shell
+    container_name: spabench-angular-erp
+    networks: [spabench]
+    ports:
+      - "3002:3002"
+    environment:
+      <<: *common-env
+      PORT: 3002
+      API_BASE_URL: http://rest-backend:4001
+      MFE_INVENTORY_URL: http://localhost:3011
+      MFE_ORDERS_URL: http://localhost:3012
+      MFE_USERS_URL: http://localhost:3013
+      MFE_REPORTS_URL: http://localhost:3014
+    depends_on:
+      - rest-backend
+      - mfe-inventory
+      - mfe-orders
+      - mfe-users
+      - mfe-reports
+
+  mfe-inventory:
+    build:
+      context: ./apps/angular-erp
+      dockerfile: Dockerfile
+      target: mfe-inventory
+    container_name: spabench-mfe-inventory
+    networks: [spabench]
+    ports:
+      - "3011:3011"
+    environment:
+      <<: *common-env
+      PORT: 3011
+
+  mfe-orders:
+    build:
+      context: ./apps/angular-erp
+      dockerfile: Dockerfile
+      target: mfe-orders
+    container_name: spabench-mfe-orders
+    networks: [spabench]
+    ports:
+      - "3012:3012"
+    environment:
+      <<: *common-env
+      PORT: 3012
+
+  mfe-users:
+    build:
+      context: ./apps/angular-erp
+      dockerfile: Dockerfile
+      target: mfe-users
+    container_name: spabench-mfe-users
+    networks: [spabench]
+    ports:
+      - "3013:3013"
+    environment:
+      <<: *common-env
+      PORT: 3013
+
+  mfe-reports:
+    build:
+      context: ./apps/angular-erp
+      dockerfile: Dockerfile
+      target: mfe-reports
+    container_name: spabench-mfe-reports
+    networks: [spabench]
+    ports:
+      - "3014:3014"
+    environment:
+      <<: *common-env
+      PORT: 3014
+
+  mfe-finance:
+    build:
+      context: ./apps/angular-erp
+      dockerfile: Dockerfile
+      target: mfe-finance
+    container_name: spabench-mfe-finance
+    networks: [spabench]
+    ports:
+      - "3015:3015"
+    environment:
+      <<: *common-env
+      PORT: 3015
+
+  mfe-hr:
+    build:
+      context: ./apps/angular-erp
+      dockerfile: Dockerfile
+      target: mfe-hr
+    container_name: spabench-mfe-hr
+    networks: [spabench]
+    ports:
+      - "3016:3016"
+    environment:
+      <<: *common-env
+      PORT: 3016
+
+  mfe-crm:
+    build:
+      context: ./apps/angular-erp
+      dockerfile: Dockerfile
+      target: mfe-crm
+    container_name: spabench-mfe-crm
+    networks: [spabench]
+    ports:
+      - "3017:3017"
+    environment:
+      <<: *common-env
+      PORT: 3017
+
+  mfe-analytics:
+    build:
+      context: ./apps/angular-erp
+      dockerfile: Dockerfile
+      target: mfe-analytics
+    container_name: spabench-mfe-analytics
+    networks: [spabench]
+    ports:
+      - "3018:3018"
+    environment:
+      <<: *common-env
+      PORT: 3018
+
+  # ── App C — React E-Commerce ──────────────────────────────────────────────
+
+  react-ecommerce:
+    build:
+      context: ./apps/react-ecommerce
+      dockerfile: Dockerfile
+    container_name: spabench-react-ecommerce
+    networks: [spabench]
+    ports:
+      - "3003:3003"
+    environment:
+      <<: *common-env
+      PORT: 3003
+      VITE_API_BASE: http://rest-backend:4001
+    depends_on:
+      rest-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3003"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ── App D — Vue Government Portal ────────────────────────────────────────
+
+  vue-portal:
+    build:
+      context: ./apps/vue-portal
+      dockerfile: Dockerfile
+    container_name: spabench-vue-portal
+    networks: [spabench]
+    ports:
+      - "3004:3004"
+    environment:
+      <<: *common-env
+      PORT: 3004
+      NUXT_API_BASE: http://rest-backend:4001
+      NUXT_SOAP_BRIDGE: http://soap-bridge:4004
+    depends_on:
+      - rest-backend
+      - soap-bridge
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3004"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ── App E — Next.js SaaS Dashboard ───────────────────────────────────────
+
+  nextjs-saas:
+    build:
+      context: ./apps/nextjs-saas
+      dockerfile: Dockerfile
+    container_name: spabench-nextjs-saas
+    networks: [spabench]
+    ports:
+      - "3005:3005"
+    environment:
+      <<: *common-env
+      PORT: 3005
+      NEXT_PUBLIC_API_BASE: http://rest-backend:4001
+      GRAPHQL_ENDPOINT: http://graphql-backend:4002/graphql
+      WS_ENDPOINT: ws://websocket-backend:4003
+    depends_on:
+      rest-backend:
+        condition: service_healthy
+      graphql-backend:
+        condition: service_healthy
+      websocket-backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3005"]
+      interval: 15s
+      timeout: 10s
+      retries: 5

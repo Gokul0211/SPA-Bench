@@ -1,0 +1,20 @@
+{
+  "name": "spabench-websocket-backend",
+  "version": "1.0.0",
+  "description": "SPABench WebSocket backend — raw ws server, port 4003, Apps B and E",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

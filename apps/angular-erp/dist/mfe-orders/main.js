@@ -1,0 +1,2 @@
+(()=>{"use strict";var __webpack_modules__={};var __webpack_require__=function(id){var m={exports:{}};__webpack_modules__[id](m,m.exports,__webpack_require__);return m.exports;};__webpack_modules__[301]=function(m,e){"OrdersService";function OrdersService(http){this.http=http;this.apiBase="http://localhost:3002";}OrdersService.prototype.getOrders=function(){return this.http.get(this.apiBase+"/api/v2/orders");};e.OrdersService=OrdersService;};exports.OrdersModule=__webpack_require__(301);})();
+//# sourceMappingURL=main.js.map

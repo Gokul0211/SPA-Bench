@@ -1,0 +1,1 @@
+{"version": 3, "file": "index.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/pages/index.tsx"], "sourcesContent": ["export default function Home() { return <div>SPABench SaaS</div>; }\n"], "mappings": "AAAA", "names": []}

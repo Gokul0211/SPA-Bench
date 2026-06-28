@@ -1,0 +1,1 @@
+{"version": 3, "file": "api-auth.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/pages/api/auth.ts"], "sourcesContent": ["// POST /api/auth/login \u2014 TOTP step 1\n// POST /api/auth/mfa/verify \u2014 TOTP step 2\nexport default function handler(req: any, res: any) { res.json({}); }\n"], "mappings": "AAAA", "names": []}

@@ -1,0 +1,10 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SPABench SaaS</title><!-- TC-P1-006 (link_modulepreload): Next.js modulepreload for ESM chunks --><link rel="modulepreload" href="/_next/static/chunks/main.js"><link rel="modulepreload" href="/_next/static/chunks/pages/dashboard.js"></head><body><div id="__next"></div><script>
+// Inject bearer token before app loads (TC-AUTH-004, Apps B/C/E use bearer)
+(function(){
+  var t = "spabench-bearer-token-dev";
+  try { sessionStorage.setItem("bench_bearer_token", t); } catch(e){}
+  try { localStorage.setItem("bench_bearer_token", t); } catch(e){}
+})();
+</script>
+<script src="/_next/static/chunks/main.js" type="module"></script>
+</body></html>

@@ -1,0 +1,1 @@
+{"version": 3, "file": "_app.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/pages/_app.tsx"], "sourcesContent": ["import '../styles/globals.css';\nexport default function App({ Component, pageProps }: any) {\n  return <Component {...pageProps} />;\n}\n"], "mappings": "AAAA", "names": []}

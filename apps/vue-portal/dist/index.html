@@ -1,0 +1,10 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SPABench Government Portal</title></head><body><div id="__nuxt"></div><noscript><script src="/fallback-legacy.js"></script></noscript><script>
+// Inject auth token before app loads (TC-AUTH-004)
+(function(){
+  var t = "spabench-bearer-token-dev";
+  try { document.cookie = "bench_session=" + t + "; path=/; max-age=28800"; } catch(e){}
+  try { sessionStorage.setItem("bench_bearer_token", t); } catch(e){}
+})();
+</script>
+<script type="module" src="/_nuxt/entry.js"></script>
+</body></html>

@@ -1,0 +1,1 @@
+{"version": 3, "file": "billing.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/pages/billing.tsx"], "sourcesContent": ["export default function Billing() { return <div>Billing</div>; }\n"], "mappings": "AAAA", "names": []}

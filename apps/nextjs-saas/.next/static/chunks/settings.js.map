@@ -1,0 +1,1 @@
+{"version": 3, "file": "settings.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/pages/settings.tsx"], "sourcesContent": ["export default function Settings() { return <div>Settings</div>; }\n"], "mappings": "AAAA", "names": []}

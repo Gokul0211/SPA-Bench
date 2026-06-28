@@ -1,0 +1,1 @@
+{"version": 3, "file": "styles.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/styles/globals.css"], "sourcesContent": ["/* SPABench SaaS global styles */\nbody { font-family: sans-serif; margin: 0; }\n"], "mappings": "AAAA", "names": []}

@@ -1,0 +1,96 @@
+{
+  "version": "1.0",
+  "description": "Vendor noise patterns for SPABench false positive classification. evaluate.py cross-references tool output URLs against these patterns to compute Vendor Noise Rate.",
+  "patterns": [
+    {
+      "id": "TC-NOISE-001",
+      "tag": "noise_momentjs",
+      "detection_method": "path_indicator",
+      "indicators": ["node_modules/moment", "/moment/locale/"],
+      "example_fps": [
+        "node_modules/moment/locale/en-gb",
+        "node_modules/moment/locale/zh-cn",
+        "node_modules/moment/locale/de"
+      ]
+    },
+    {
+      "id": "TC-NOISE-002",
+      "tag": "noise_exceljs",
+      "detection_method": "library_signature",
+      "indicators": ["exceljs", "/xl/worksheets/", "/xl/sharedStrings", "[Content_Types]"],
+      "example_fps": [
+        "/xl/worksheets/sheet1.xml",
+        "/xl/sharedStrings.xml",
+        "/xl/styles.xml"
+      ]
+    },
+    {
+      "id": "TC-NOISE-003",
+      "tag": "noise_angular_compiler",
+      "detection_method": "prefix_match",
+      "indicators": ["/@angular/", "/node_modules/@angular/"],
+      "example_fps": [
+        "/@angular/core",
+        "/@angular/common/http",
+        "/node_modules/@angular/core/fesm2022/core.mjs"
+      ]
+    },
+    {
+      "id": "TC-NOISE-004",
+      "tag": "noise_pdfjs",
+      "detection_method": "artifact_list",
+      "indicators": ["/Type /Page", "/MediaBox", "/Resources", "/Type /Catalog", "pdfjs-dist"],
+      "example_fps": [
+        "/Type /Page",
+        "/MediaBox",
+        "/Resources"
+      ]
+    },
+    {
+      "id": "TC-NOISE-005",
+      "tag": "noise_nodejs_streams",
+      "detection_method": "vendor_heuristic",
+      "indicators": ["stream/passthrough", "stream/transform", "stream/readable", "readable-stream"],
+      "example_fps": [
+        "stream/passthrough",
+        "stream/transform",
+        "node_modules/readable-stream/lib/_stream_readable.js"
+      ]
+    },
+    {
+      "id": "TC-NOISE-006",
+      "tag": "noise_template_literal_artifacts",
+      "detection_method": "structural_analysis",
+      "indicators": ["/static/js/", ".chunk.js", "/_next/static/chunks/", "/webpack-"],
+      "example_fps": [
+        "/static/js/component.a3f2b1.chunk.js",
+        "/_next/static/chunks/component-d4e5f6.js",
+        "/webpack-runtime/chunk/component"
+      ]
+    },
+    {
+      "id": "TC-NOISE-007",
+      "tag": "noise_react_component_names",
+      "detection_method": "frontend_route_nav_penalty",
+      "penalty": 0.05,
+      "indicators": ["ProductCard", "CheckoutForm", "UserProfile", "OrderHistory", "PaymentGateway", "AdminDashboard", "InventoryTable", "ReportGenerator", "NotificationCenter"],
+      "example_fps": [
+        "/ProductCard",
+        "/CheckoutForm",
+        "/UserProfile"
+      ]
+    },
+    {
+      "id": "TC-NOISE-008",
+      "tag": "noise_router_navigation",
+      "detection_method": "frontend_route_nav_penalty",
+      "penalty": 0.05,
+      "indicators": ["/dashboard/reports", "/admin/users", "/user/profile/settings", "/orders/history", "/checkout/payment", "/inventory/warehouse/items", "/settings/notifications/preferences", "/team/members/invite", "/billing/plans/upgrade"],
+      "example_fps": [
+        "/dashboard/reports",
+        "/admin/users",
+        "/user/profile/settings"
+      ]
+    }
+  ]
+}

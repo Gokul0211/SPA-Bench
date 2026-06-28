@@ -1,0 +1,2 @@
+var mfeAdmin;(()=>{"use strict";mfeAdmin={"AdminModule":()=>import("./main.js").then(m=>m.AdminModule),"LegacyReportService":()=>import("./main.js").then(m=>m.LegacyReportService)};})();
+//# sourceMappingURL=remoteEntry.js.map

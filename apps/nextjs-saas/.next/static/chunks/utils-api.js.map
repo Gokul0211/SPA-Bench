@@ -1,0 +1,1 @@
+{"version": 3, "file": "utils-api.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/utils/api.ts"], "sourcesContent": ["export const API_BASE = 'http://localhost:3005';\nexport function authHeader(token: string) { return { Authorization: `Bearer ${token}` }; }\n"], "mappings": "AAAA", "names": []}

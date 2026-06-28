@@ -1,0 +1,11 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SPABench ERP</title></head><body><div id="app-root"></div>
+<script>
+// Inject bearer token before shell loads (Apps B/C/E: requireBearerAuth)
+(function(){
+  var t = "spabench-bearer-token-dev";
+  try { sessionStorage.setItem("bench_bearer_token", t); } catch(e){}
+  window.__BENCH_BEARER_TOKEN__ = t;
+})();
+</script>
+<script src="main.js"></script>
+</body></html>

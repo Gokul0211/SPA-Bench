@@ -1,0 +1,1 @@
+{"version": 3, "file": "_document.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/pages/_document.tsx"], "sourcesContent": ["import { Html, Head, Main, NextScript } from 'next/document';\nexport default function Document() {\n  return <Html><Head /><body><Main /><NextScript /></body></Html>;\n}\n"], "mappings": "AAAA", "names": []}

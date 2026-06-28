@@ -1,0 +1,15 @@
+{
+  "version": 3,
+  "file": "api-users.js",
+  "sourceRoot": "",
+  "sources": [
+    "webpack://nextjs-saas/./src/pages/api/users.ts",
+    "./src/pages/api/users.ts"
+  ],
+  "sourcesContent": [
+    "// Next.js dynamic route /api/users/[id]\nexport default function handler(req: any, res: any) { res.json({}); }\n",
+    "import { NextApiRequest, NextApiResponse } from 'next';\n\nexport default async function handler(req: NextApiRequest, res: NextApiResponse) {\n  const { method, query } = req;\n  const token = req.headers.authorization?.split(' ')[1];\n  if (!token) return res.status(401).json({ error: 'Unauthorized' });\n\n  if (method === 'GET' && !query.id) {\n    // GET /api/users?role=...\n    const users = [{ id: '1', name: 'Test User', role: query.role || 'user' }];\n    return res.json(users);\n  }\n  if (method === 'GET' && query.id) {\n    // GET /api/users/:id\n    return res.json({ id: query.id, name: 'Test User' });\n  }\n  if (method === 'POST') {\n    // POST /api/users\n    const { name, email, role } = req.body;\n    return res.status(201).json({ id: 'new-id', name, email, role });\n  }\n  if (method === 'PUT' && query.id) {\n    // PUT /api/users/:id\n    return res.json({ id: query.id, ...req.body });\n  }\n  if (method === 'DELETE' && query.id) {\n    // DELETE /api/users/:id\n    return res.status(204).end();\n  }\n  return res.status(405).end();\n}\n"
+  ],
+  "mappings": "AAAA",
+  "names": []
+}

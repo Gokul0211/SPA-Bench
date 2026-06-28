@@ -1,0 +1,1 @@
+{"version": 3, "file": "api-dashboard.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/pages/api/dashboard.ts"], "sourcesContent": ["// GET /api/dashboard/metrics?period= \u2014 EP-E-020\nexport default function handler(req: any, res: any) { res.json({}); }\n"], "mappings": "AAAA", "names": []}

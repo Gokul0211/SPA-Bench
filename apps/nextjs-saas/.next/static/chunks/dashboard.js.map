@@ -1,0 +1,1 @@
+{"version": 3, "file": "dashboard.js", "sourceRoot": "", "sources": ["webpack://nextjs-saas/./src/pages/dashboard.tsx"], "sourcesContent": ["import MetricsDashboard from '../components/MetricsDashboard';\nexport default function DashboardPage() { return <MetricsDashboard />; }\n"], "mappings": "AAAA", "names": []}
