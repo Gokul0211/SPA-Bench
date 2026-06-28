@@ -24,3 +24,5 @@ desktop.ini
 .env
 .env.*
 *.log
+"run_authenticated_scans.py" 
+"run_competitor_scans.py" 
