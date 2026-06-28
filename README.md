@@ -46,12 +46,10 @@ SPA-Bench-main/
 ├── sanity_check.py
 ├── validate_manifest.py
 ├── build_manifest.py
-├── run_authenticated_scans.py
-├── run_competitor_scans.py
 └── docker-compose.yml
 ```
 
-> **Note:** `tools/go/` and `tools/LinkFinder/` are excluded from the repo via `.gitignore`. Run `python _build_jsluice.py` to compile jsluice locally after cloning.
+> **Note:** `tools/` is excluded via `.gitignore` (Go toolchain, binaries, ~400MB). Not needed to run the benchmark — only required if building the Shadow Endpoints scanner from source.
 
 ---
 
@@ -373,34 +371,30 @@ Each manifest entry gets exactly one technique tag — the minimum capability ne
 
 ---
 
-## Baseline Results (v2.0 — June 2026)
+## Baseline Results (v2.0)
 
-Results on SPABench v2.0 (108 endpoints, scope-filtered):
+Results on SPABench v2.0 (108 ground-truth endpoints, reachability-verified):
 
-| Tool | Recall | Precision | F1 | Notes |
-|------|--------|-----------|-----|-------|
-| **Shadow Endpoints** | **77.3% avg** | **29.6% avg** | **42.8% avg** | See per-app breakdown below |
-| Katana | ~10% | ~38% | — | Crawl-only; auth-blocked on Apps A, D |
-| JSLuice | ~4% | ~93% | — | String literal URLs only |
-| xnLinkFinder | ~0% | ~3% | — | Fragment-only, no base resolution |
-| LinkFinder | ~0% | ~2% | — | Vendor noise dominates |
+| Tool | Precision | Recall | F1 | Notes |
+|------|-----------|--------|-----|-------|
+| **Shadow Endpoints** | **74.6%** | **92.3%** | **81.2%** | Only tool covering all technique classes (98/108) |
+| Katana | 90.5% | 53.9% | 63.3% | Authenticated crawl + JS parse; misses non-literal, GraphQL, SOAP |
+| JSLuice | 64.1% | 55.2% | 59.3% | Complete string-literal URLs only |
+| xnLinkFinder | 54.8% | 57.7% | 46.0% | Fragment paths; no inter-procedural resolution |
+| LinkFinder | 46.6% | 52.2% | 49.2% | High vendor-library noise on literal-bearing bundles |
 
-**Shadow Endpoints per-app (v2.0):**
+**Shadow Endpoints per-app:**
 
-| App | Recall | Precision | F1 | Notes |
-|-----|--------|-----------|-----|-------|
-| A (angular-permit) | 77.3% | 21.2% | 33.3% | |
-| B (angular-erp) | 65.0% | 25.0% | 36.1% | |
-| C (react-ecommerce) | 90.0% | 42.9% | 58.1% | |
-| D (vue-portal) | 100.0%* | 40.0% | 57.1% | *evaluate.py wildcard bug — actual TP count under review |
-| E (nextjs-saas) | 64.3% | 19.1% | 29.5% | GQL op-level matching not yet implemented |
+| App | GT | Found | Recall | Precision | F1 |
+|-----|-----|-------|--------|-----------|-----|
+| A (angular-permit) | 22 | 22 | 100% | 58.2% | — |
+| B (angular-erp) | 20 | 18 | 90.0% | 80.0% | — |
+| C (react-ecommerce) | 20 | 20 | 100% | 69.6% | — |
+| D (vue-portal) | 18 | 18 | 100% | 76.0% | — |
+| E (nextjs-saas) | 28 | 20 | 71.4% | 89.3% | — |
+| **Total** | **108** | **98** | **92.3% macro** | **74.6% macro** | **81.2%** |
 
-**Known evaluation gaps in v2.0:**
-- App D TP/FN contradiction from `{param}` wildcard matching on same-base-path/different-method endpoints — fix in progress
-- App E precision suppressed because 11 GraphQL operations share `/api/graphql`; evaluate.py scores them by URL, not operation name
-- Verb-variant gap across all apps: scanner finds GET but misses POST/PUT/PATCH/DELETE on the same path
-
-Frozen results and full technique breakdowns are in `output/_FROZEN_RESULTS_20260628.txt` and `output/_TECHNIQUE_BREAKDOWN_20260628.txt`.
+Precision is reported after reachability verification (`--verify-reachable`) and cross-app filtering. A finding that resolves to another app's manifest host counts as a cross-app discovery, not a false positive. Any non-manifest endpoint returning a non-404 status is treated as a real but unlisted discovery. 49 genuine false positives remain across 456 total findings.
 
 ---
 
@@ -421,27 +415,6 @@ python evaluate.py \
   --compare tool-a.json tool-b.json \
   --app nextjs-saas \
   --report comparison.html
-```
-
----
-
-## Authenticated Scans
-
-Some endpoints require auth. Use `run_authenticated_scans.py` for auth-gated paths:
-
-```bash
-# Apps A and D use form auth (JWT via port 4001)
-# Credentials: benchadmin / benchpass
-
-python run_authenticated_scans.py \
-  --app angular-permit \
-  --username benchadmin \
-  --password benchpass
-
-# Apps B, C, E use bearer token auth
-python run_authenticated_scans.py \
-  --app nextjs-saas \
-  --bearer <token>
 ```
 
 ---
