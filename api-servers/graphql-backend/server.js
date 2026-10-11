@@ -1,37 +1,17 @@
 'use strict';
 
 /**
- * SPABench GraphQL Backend — port 4002
+ * SPABench GraphQL backend (port 4002; nextjs-saas reaches it same-origin at /graphql).
  *
- * Stack:
- *   Apollo Server 4  (@apollo/server + expressMiddleware)
- *   Express 4        (HTTP transport + health endpoint)
- *   graphql-ws       (WebSocket subscriptions on the same port via HTTP upgrade)
- *   ws               (WebSocket server)
+ *   GET  /health     liveness
+ *   GET  /graphql    small JSON description (without ?query=); with ?query= Apollo runs it
+ *   POST /graphql    queries and mutations
+ *   WS   /graphql    graphql-ws subscriptions
  *
- * Endpoints:
- *   GET  /health        Docker healthcheck — returns { status: 'ok' }
- *   GET  /graphql       Returns GraphQL playground indicator (EP-E-001 graphql_endpoint_heuristic)
- *   POST /graphql       GraphQL query / mutation execution
- *   WS   /graphql       graphql-ws subscription protocol (upgrade from HTTP)
- *
- * Auth (TC-AUTH-004 bearer_injection):
- *   HTTP queries/mutations: Authorization: Bearer <token> header → context.user
- *   WebSocket subscriptions: connectionParams.Authorization → onConnect validates
- *
- * Introspection: ENABLED (TC-P4-002 graphql_introspection)
- *   The full __schema is visible to any client that sends the introspection query.
- *   All 8 Query + 6 Mutation + 3 Subscription resolvers appear in __schema.types.
- *
- * Auth-gated resolvers (manifest auth_required: true):
- *   All queries except getProduct and searchProducts
- *   All mutations
- *   All subscriptions (enforced at WS connect, not per-resolver)
- *
- * Environment variables:
- *   PORT                4002
- *   BENCH_AUTH_SECRET   JWT signing secret (shared with rest-backend)
- *   BENCH_BEARER_TOKEN  Static pre-generated bearer token
+ * Introspection is enabled. Auth: Authorization: Bearer <JWT from the REST
+ * backend's login> (HTTP header, or connectionParams.Authorization on WS).
+ * BENCH_BEARER_TOKEN is accepted only when BENCH_ALLOW_STATIC_TOKEN=1.
+ * Resolvers enforce auth (all except getProduct and searchProducts).
  */
 
 const http              = require('http');
@@ -52,8 +32,9 @@ const { makeExecutableSchema }               = require('@graphql-tools/schema');
 const { resolvers }  = require('./resolvers');
 
 const PORT          = parseInt(process.env.PORT || '4002', 10);
-const AUTH_SECRET   = process.env.BENCH_AUTH_SECRET  || 'spabench-dev-secret-do-not-use-in-production';
+const AUTH_SECRET   = process.env.BENCH_AUTH_SECRET  || 'dev-secret-do-not-use-in-production';
 const BEARER_TOKEN  = process.env.BENCH_BEARER_TOKEN || 'spabench-bearer-token-dev';
+const ALLOW_STATIC_TOKEN = process.env.BENCH_ALLOW_STATIC_TOKEN === '1';
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 const typeDefs = readFileSync(path.join(__dirname, 'schema.graphql'), 'utf8');
@@ -70,12 +51,10 @@ function validateAuthHeader(authHeader) {
   const token = authHeader.slice(7).trim();
   if (!token) return null;
 
-  // 1. Static benchmark token
-  if (token === BEARER_TOKEN) {
-    return { username: 'benchuser', role: 'admin' };
+  if (ALLOW_STATIC_TOKEN && token === BEARER_TOKEN) {
+    return { username: 'benchadmin', role: 'admin' };
   }
 
-  // 2. JWT
   try {
     const payload = jwt.verify(token, AUTH_SECRET);
     return { username: payload.sub, role: payload.role };
@@ -94,9 +73,7 @@ async function main() {
   // The WS server only handles the /graphql path.
   const wsServer = new WebSocketServer({ server: httpServer, path: '/graphql' });
 
-  // graphql-ws onConnect — enforces bearer auth for all subscriptions.
-  // Subscriptions with auth_required: true in the manifest (all 3) will fail
-  // without a valid token, matching the benchmark's auth-stratified recall model.
+  // Connections are accepted without a token; resolvers enforce auth.
   const serverCleanup = useServer(
     {
       schema,
@@ -106,10 +83,7 @@ async function main() {
         const user = validateAuthHeader(authHeader);
         return { user };
       },
-      onConnect(ctx) {
-        // Allow unauthenticated connections — auth is checked per-resolver.
-        // Returning false here would block the connection entirely, but the
-        // benchmark tests graceful degradation, not hard blocking.
+      onConnect() {
         return true;
       },
     },
@@ -119,8 +93,7 @@ async function main() {
   // ── Apollo Server 4 ─────────────────────────────────────────────────────────
   const apollo = new ApolloServer({
     schema,
-    introspection: true,    // TC-P4-002: MUST be true — introspection is the
-                            // primary discovery mechanism for all 17 resolvers
+    introspection: true,
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
       // Clean up graphql-ws server on Apollo shutdown
@@ -144,27 +117,21 @@ async function main() {
     credentials: true,
   }));
 
-  // ── Health endpoint ───────────────────────────────────────────────────────────
-  // Required by Docker healthcheck and depends_on: condition: service_healthy
   app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', service: 'spabench-graphql-backend', uptime: process.uptime() });
+    res.json({ status: 'ok' });
   });
 
-  // ── GET /graphql — playground indicator ──────────────────────────────────────
-  // EP-E-001 (graphql_endpoint_heuristic): the tool probes /graphql and expects
-  // a 200 with GraphQL-related content on GET. This signals that the endpoint
-  // exists and accepts GraphQL operations.
-  app.get('/graphql', (_req, res) => {
-    res.json({
-      message:      'SPABench GraphQL endpoint. Send POST with { query } to execute.',
+  // GET /graphql without a query: a short JSON description (what a browser or a
+  // probe sees). GET with ?query= falls through to Apollo.
+  app.get('/graphql', (req, res, next) => {
+    if (req.query.query) return next();
+    return res.json({
+      message: 'GraphQL endpoint. Send POST with {"query": "..."} to execute.',
       introspection: 'enabled',
-      playground:   `http://localhost:${PORT}/graphql`,
-      docs:         'Send a POST request with {"query": "{ __typename }"} to verify connectivity.',
-      _benchmark:   'EP-E-001 graphql_endpoint_heuristic — this GET response is the heuristic signal',
     });
   });
 
-  // ── POST /graphql — Apollo middleware ─────────────────────────────────────────
+  // ── /graphql — Apollo ─────────────────────────────────────────────────────────
   app.use(
     '/graphql',
     bodyParser.json(),
@@ -183,8 +150,6 @@ async function main() {
   console.log(`[graphql-backend] HTTP  → http://localhost:${PORT}/graphql`);
   console.log(`[graphql-backend] WS    → ws://localhost:${PORT}/graphql`);
   console.log(`[graphql-backend] Health → http://localhost:${PORT}/health`);
-  console.log(`[graphql-backend] Introspection: ENABLED`);
-  console.log(`[graphql-backend] Resolvers: 8 Query + 6 Mutation + 3 Subscription`);
 }
 
 main().catch(err => {

@@ -20,22 +20,6 @@ export interface AuthState {
   authenticated: boolean;
 }
 
-/**
- * Shell AuthService — EP-B-005
- *
- * TC-P1.5-008 (auth_service_recovery):
- *   This file is recoverable via source map decompilation of shell/main.js.
- *   The login endpoint URL (`${this.apiBase}/api/auth/login`) is the primary
- *   signal — the template literal resolves to http://localhost:3002/api/auth/login
- *   (EP-B-005).
- *
- * TC-P3-013 (fetch_interception):
- *   During Phase 3 dynamic browsing, the POST to /api/auth/login is intercepted
- *   at the network layer when the login form is submitted. The tool captures the
- *   URL from the intercepted XHR/Fetch request.
- *
- * Auth method: bearer (BENCH_BEARER_TOKEN injected at startup for automated runs).
- */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiBase = environment.apiBaseUrl;
@@ -50,22 +34,12 @@ export class AuthService {
   readonly state$ = this.authState$.asObservable();
 
   constructor(private http: HttpClient) {
-    // Inject static benchmark bearer token for automated test runners (TC-AUTH-004)
-    const staticToken = (window as any).__BENCH_BEARER_TOKEN__;
-    if (staticToken) {
-      this.authState$.next({
-        token: staticToken,
-        username: 'benchuser',
-        role: 'operator',
-        authenticated: true,
-      });
+    const token = sessionStorage.getItem(environment.authTokenKey);
+    if (token) {
+      this.authState$.next({ token, username: null, role: null, authenticated: true });
     }
   }
 
-  /**
-   * EP-B-005: POST http://localhost:3002/api/auth/login
-   * Sends bearer credentials to obtain a JWT for subsequent API calls.
-   */
   login(username: string, password: string): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${this.apiBase}/api/auth/login`, { username, password })

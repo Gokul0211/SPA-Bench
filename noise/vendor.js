@@ -1,13 +1,12 @@
 /**
  * SPABench — Vendor Noise Fixture Bundle
  *
- * This file simulates the vendor noise that gets bundled into real SPA builds.
- * It is used by evaluate.py to compute the Vendor Noise Rate metric:
+ * Reference examples of the vendor noise that bundled libraries put into SPA
+ * builds (the served apps carry their own copies, e.g. angular-permit's
+ * vendor.js). This file is documentation only: evaluate.py classifies false
+ * positives with the indicators in noise/manifest-noise.json, not with this file.
  *
- *   Vendor Noise Rate = FPs attributable to bundled libraries / Total FPs
- *
- * Any URL-like string in a tool's output that matches a pattern in this file
- * is classified as a vendor noise false positive, not a real API endpoint.
+ *   Vendor Noise Rate = false positives matching a noise indicator / all false positives
  *
  * TC-NOISE-001: noise_momentjs
  * TC-NOISE-002: noise_exceljs

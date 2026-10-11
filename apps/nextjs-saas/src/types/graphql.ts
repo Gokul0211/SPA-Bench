@@ -1,2 +1,2 @@
-// All 17 GraphQL resolver types
-export type GqlResolver = 'getUser'|'listOrders'|'getProduct'|'searchProducts'|'getDashboardMetrics'|'getAuditLog'|'listTeamMembers'|'getBillingInfo'|'createUser'|'updateOrder'|'deleteProduct'|'processCheckout'|'inviteTeamMember'|'updateBilling'|'orderStatusChanged'|'dashboardMetricsUpdated'|'teamActivityFeed';
+// Operations the client knows about (generated from the queries it issues).
+export type ClientOperation = 'getUser'|'listOrders'|'getProduct'|'searchProducts'|'getDashboardMetrics'|'listTeamMembers'|'getBillingInfo'|'createUser'|'updateOrder'|'deleteProduct'|'inviteTeamMember'|'updateBilling'|'orderStatusChanged'|'dashboardMetricsUpdated'|'teamActivityFeed';

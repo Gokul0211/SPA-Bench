@@ -1,232 +1,116 @@
-# SPABench Evaluation Guide
+# SPABench Evaluation Guide (v3)
 
-How to run `evaluate.py` against any SPA API discovery tool and interpret the results.
+How `evaluate.py` scores a tool, exactly. Everything here is implemented in `evaluate.py` and covered by
+`tests/test_evaluate.py`.
 
 ---
 
-## Quick Start
+## 1. Run
 
 ```bash
-# 1. Start the benchmark
-docker compose up -d
-
-# 2. Run your tool against App A (Angular Permit)
-your-tool --target http://localhost:3001 --output results-app-a.json
-
-# 3. Evaluate
-python evaluate.py \
-  --manifest manifest.json \
-  --tool-output results-app-a.json \
-  --app angular-permit \
-  --breakdown-by technique \
-  --show-missed
+docker compose up -d --build
+your-tool --target http://localhost:3001 --output results.json
+python evaluate.py --tool-output results.json --app angular-permit --breakdown-by discovery_class --show-missed
 ```
 
----
+Always pass `--app`: relative findings are resolved against that app's origin, and every metric is per app.
+Without `--app`, every app is scored and micro (pooled) and macro (mean over apps) totals are printed.
 
-## Output Format
+## 2. Input formats
 
-Your tool must produce — or be adapted to produce — a JSON file in this format:
+| `--format` | Expects |
+|---|---|
+| `spabench-v1` (default) | JSON `{"endpoints": [{"url" or "endpoint": "...", "method": "GET", "confidence_score": 87}]}` — the Shadow Endpoints report format. Only the URL is required. |
+| `linkfinder`, `urls` | one URL or path per line (`#` lines ignored) |
+| `xnlinkfinder` | JSON array / `{"results": [...]}`, or one URL per line |
+| `jsluice` | JSON lines (`jsluice urls` output) or a JSON array; `url` (or `value`) and optional `method` |
+| `katana` | JSON lines; `request.endpoint` and `request.method` |
 
-```json
-{
-  "tool": "YourToolName",
-  "version": "1.0.0",
-  "target": "http://localhost:3001",
-  "endpoints": [
-    {
-      "url": "http://localhost:3001/api/rc_permit/getPermitType",
-      "method": "GET",
-      "confidence": 91,
-      "source": "static_analysis"
-    }
-  ]
-}
-```
+URLs are taken as the tool wrote them — absolute or relative, nothing is rewritten before scoring.
 
-Fields `confidence` and `source` are optional. Only `url` and `method` are required per endpoint.
+## 3. What is counted
 
----
+**Endpoint identity.** A REST or WebSocket endpoint is its **path template** within an app; a GraphQL operation
+is its **name** (report it as `…/graphql#operationName`). The ground truth's entries are grouped by that identity,
+so a path that the client calls with GET, POST and DELETE is one unit; a tool finding the path once gets the unit
+once.
 
-## Built-In Adapters
-
-Use `--format` to handle native output formats directly:
-
-| Format | `--format` value | Description |
+| Metric | Unit | Formula |
 |---|---|---|
-| SPABench native | `spabench-v1` | Default. JSON with `endpoints` array |
-| LinkFinder | `linkfinder` | One URL or path per line, `#` comments |
-| xnLinkFinder | `xnlinkfinder` | JSON array or `{ "results": [...] }` |
-| JSLuice | `jsluice` | JSON array of `{ "kind": "URL", "value": "..." }` |
-| Katana | `katana` | JSONL, one `{ "request": { "endpoint": "..." } }` per line |
+| recall (path level, headline) | ground-truth paths | found paths / ground-truth paths |
+| precision (path level, headline) | the tool's distinct finding-paths | finding-paths that match a ground-truth path / all finding-paths |
+| method-level P/R (secondary) | (method, path) | only for formats that carry methods (`spabench-v1`, `jsluice`, `katana`) |
 
-Example:
+Findings are deduplicated before counting: query strings, trailing slashes, and id-like path segments
+(`42`, hex/uuid, `PTW-1000`) collapse, so `/api/users/1`, `/api/users/7` and `/api/users/{id}` are one finding.
+
+**Matching a finding to the ground truth**
+
+* Relative findings resolve against the app origin (`/api/x` → `http://localhost:300N/api/x`).
+* Hosts are interchangeable only within the app's `api_hosts` (its origin plus the backends its nginx proxies to,
+  e.g. angular-erp: 3002, 4001, 3011–3018). External hosts (staging, private IPs) must match exactly.
+* A `{param}` in the ground truth matches any one segment; a finding's own placeholder (`{id}`, `:id`, `${…}`)
+  matches only a `{param}`, never a literal segment. Segment counts must agree.
+* A GraphQL finding with a fragment matches the operation of that name; `/graphql` without a fragment matches the
+  GraphQL HTTP endpoint entry. Substrings such as `/graphql-playground` match nothing.
+
+**Assets are not endpoints.** Findings that are static files (`.js .mjs .map .css .html .json .wsdl …`) are scored
+separately against the app's asset list (`assets` in the manifest: remoteEntry files, lazily loaded chunks,
+workers) and never count as endpoint false positives.
+
+## 4. Strict and lenient precision
+
+| | strict (default headline) | lenient |
+|---|---|---|
+| finding matches a ground-truth path | true positive | true positive |
+| no match, but the **route oracle** says the benchmark serves it (e.g. `/actuator/health`, `/api-docs`) | false positive | true positive ("real uncurated") |
+| no match, not served | false positive | false positive |
+| on a host outside the app (CDN, another app's port) | false positive (`out_of_scope`) | ignored |
+
+The route oracle (`spabench/oracle.py`) is read from source: Express routes, the WSDL, the GraphQL schema, the
+WebSocket server and each app's nginx configuration. It replaces v2.0's live "any non-404 is real" probing, which
+counted every path on an app as real because the apps answered every path with their HTML shell.
+
+Both modes are always computed; `--mode` only chooses the headline. Report which one you use.
+
+## 5. Breakdowns and statistics
+
+* `--breakdown-by discovery_class | design_technique | kind` — per-group recall over ground-truth paths
+  (`design_technique` covers test cases only);
+* recall for public vs login-protected endpoints, and over test cases only;
+* Wilson 95 % intervals for every precision and recall;
+* `hits` in the JSON report maps every ground-truth id to found/not found — use it for paired comparisons
+  (McNemar) between tools on the same app;
+* `--min-score S` drops findings below a confidence score; `--pr-curve` prints precision/recall at every score
+  threshold;
+* vendor noise: false positives are tagged with `noise/manifest-noise.json` indicators (whole path segments, not
+  substrings); the rate is tagged FPs / all FPs.
+
+## 6. JSON report (`--report out.json`)
+
+```
+{tool, format, manifest_version, mode,
+ apps: [{app, path_level: {strict: {...}, lenient: {...}}, method_level, counts, recall_public,
+         recall_authenticated, recall_test_cases, per_discovery_class, per_design_technique, per_kind,
+         assets, hits, missed, false_positives, vendor_noise, real_uncurated}],
+ combined: {strict: {micro, macro}, lenient: {micro, macro}}}     # only when several apps are scored
+```
+
+Each `path_level` block has `precision, recall, f1, precision_ci95, recall_ci95, tp_findings, findings,
+tp_ground_truth, ground_truth`.
+
+## 7. Fair comparisons
+
+* Score every tool with the same command (`run_competitor_scans.py` and `run_authenticated_scans.py` do this).
+* Give every tool the same inputs: the same JS files (the runners use the app's complete served inventory), the
+  same credentials, the same crawl budget where the tool has one.
+* Report per app and pooled, with intervals, strict and lenient, and test-case recall separately from surface
+  recall.
+
+## 8. Reproducing v2.0 numbers
 
 ```bash
-# Evaluate LinkFinder output
-python evaluate.py \
-  --manifest manifest.json \
-  --tool-output linkfinder-results.txt \
-  --format linkfinder \
-  --breakdown-by technique
+python evaluate.py --legacy-v2 --manifest legacy/manifest-v2.0.json --tool-output results.json --app angular-permit
 ```
 
----
-
-## Metrics Explained
-
-### Precision
-```
-Precision = True Positives / (True Positives + False Positives)
-```
-What fraction of the tool's reported endpoints are real API endpoints in the manifest.
-A tool that reports only things it is certain about has high precision.
-
-### Recall
-```
-Recall = True Positives / Total Manifest Endpoints
-```
-What fraction of all ground-truth endpoints the tool discovered.
-Per-technique recall is the most actionable metric — it shows exactly which discovery
-capabilities are present or absent.
-
-### F1
-```
-F1 = 2 * Precision * Recall / (Precision + Recall)
-```
-Harmonic mean. Use this for single-number tool ranking.
-
-### Auth-Stratified Recall
-```
-Recall_unauthenticated = TPs from unauth endpoints / Total unauth manifest endpoints
-Recall_authenticated   = TPs from auth-gated endpoints / Total auth-gated manifest endpoints
-```
-A tool that fails to authenticate will have `Recall_authenticated = 0%` regardless of its
-static analysis capability. These two metrics separate the authentication problem from the
-discovery problem.
-
-### Vendor Noise Rate
-```
-Vendor Noise Rate = FPs attributable to bundled libraries / Total FPs
-```
-Computed by cross-referencing false positive URLs against patterns in `noise/manifest-noise.json`.
-A rate of 80% means 80% of the tool's false positives are vendor library paths
-(Moment.js locales, ExcelJS XML paths, Angular compiler artifacts, etc.) rather than
-genuine endpoint candidates.
-
----
-
-## URL Matching Rules
-
-`evaluate.py` applies these normalisation rules before comparing URLs:
-
-1. **Trailing slash stripped** — `/api/users/` matches `/api/users`
-2. **Scheme + host lowercased** — `HTTP://Localhost:3001` matches `http://localhost:3001`
-3. **Query params sorted alphabetically** — `?b=2&a=1` matches `?a=1&b=2`
-4. **Path parameter wildcards** — `/api/users/123` matches `/api/users/{id}`
-
-GraphQL resolver endpoints use URL fragments: `http://localhost:3005/graphql#getUser`.
-Both the base URL and the fragment must match.
-
----
-
-## Breakdown Modes
-
-### Per-technique breakdown (most actionable)
-
-```bash
-python evaluate.py \
-  --manifest manifest.json \
-  --tool-output results.json \
-  --breakdown-by technique
-```
-
-Output:
-```
-  Breakdown by technique:
-  ----------------------------------------------------------
-  Dimension                              Found Total   Recall
-  ----------------------------------------------------------
-  v fetch_interception                       2     2   100.0%
-  ~ url_concat_direct                        1     2    50.0%
-  x webpack_registry_unnavigated             0     2     0.0%
-  x soap_bridge_dynamic                      0     3     0.0%
-  ----------------------------------------------------------
-```
-
-`v` = 100% recall, `~` = partial, `x` = 0%
-
-### Per-phase breakdown
-
-```bash
-python evaluate.py --manifest manifest.json --tool-output results.json --breakdown-by phase
-```
-
-### Per-app breakdown
-
-```bash
-python evaluate.py --manifest manifest.json --tool-output results.json --breakdown-by app
-```
-
----
-
-## Compare Multiple Tools
-
-```bash
-python evaluate.py \
-  --manifest manifest.json \
-  --compare linkfinder.json jsluice.json katana.json your-tool.json \
-  --report comparison.html
-```
-
-Produces an HTML table with all tools side-by-side. Also works with `--report comparison.json`
-for machine-readable output.
-
----
-
-## Filter to One App
-
-```bash
-# Evaluate only against App A
-python evaluate.py \
-  --manifest manifest.json \
-  --tool-output results.json \
-  --app angular-permit \
-  --breakdown-by technique \
-  --show-missed
-```
-
-App IDs: `angular-permit`, `angular-erp`, `react-ecommerce`, `vue-portal`, `nextjs-saas`
-
----
-
-## Reference Results (Paper Baseline)
-
-These results are from the companion paper evaluation on the real production targets.
-SPABench reproduces the same discovery challenges in a controlled environment.
-
-| Tool | Precision | Recall (App A equivalent) | Notes |
-|---|---|---|---|
-| LinkFinder | ~2% | <1% | 370/550 results are vendor noise |
-| xnLinkFinder | ~3% | <1% | Fragment-only URLs, no base resolution |
-| JSLuice | ~95% | <1% | Finds only complete string literal URLs (4 of 421) |
-| Katana | ~40% | ~5% | Crawl-only, misses unnavigated paths |
-| Research tool (paper) | ~89% | ~96% | Full hybrid static+dynamic pipeline |
-
----
-
-## Troubleshooting
-
-**All recalls are 0%** — Check that your tool output URLs use the correct localhost ports
-(3001–3005 for apps, 4001–4004 for API servers).
-
-**Recall_authenticated = 0%** — Your tool did not authenticate. See `docs/ADDING_TEST_CASES.md`
-for the auth flows. Use `--format` to check the tool output contains any auth-gated endpoint URLs.
-
-**High vendor noise rate** — Your tool is extracting vendor library paths as endpoints.
-The `noise/vendor.js` fixture contains example patterns. Run with `--show-missed` to see
-which endpoints were found vs missed, and compare false positives against `noise/manifest-noise.json`.
-
-**GraphQL endpoints not found** — GraphQL resolvers (EP-E-GQL-*) require introspection against
-`http://localhost:3005/graphql`. If your tool doesn't send `__schema` introspection queries,
-these 17 endpoints will not appear in its output.
+runs the v2.0 scorer unchanged. Its rules differ from v3 in every respect listed above; do not mix the two.

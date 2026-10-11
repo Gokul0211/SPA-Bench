@@ -1,669 +1,514 @@
 #!/usr/bin/env python3
 """
-SPABench evaluate.py - evaluation script for SPA API endpoint discovery tools.
-Computes precision, recall, F1, vendor noise rate, and auth-stratified recall.
+SPABench evaluate.py — score an API-discovery tool against manifest.json (v3).
 
-Usage:
-  python evaluate.py --manifest manifest.json --tool-output out.json
-  python evaluate.py --manifest manifest.json --tool-output out.json --breakdown-by technique
-  python evaluate.py --manifest manifest.json --compare a.json b.json --report out.html
-  python evaluate.py --manifest manifest.json --tool-output out.json --app angular-permit
+Unit of evaluation
+  An endpoint is identified by its path template (REST, WebSocket) or its
+  operation name (GraphQL), per app. Every finding and every ground-truth entry
+  is reduced to that unit, so a path counts once no matter how many HTTP
+  methods use it or how many times a tool reports it.
+    path level   (primary)    recall = matched GT paths / GT paths
+                              precision = matching finding-paths / all finding-paths
+    method level (secondary)  the same over (method, path); only for tools that emit methods
+  Precision and recall always use the same unit.
 
-Formats (--format): spabench-v1 (default), linkfinder, xnlinkfinder, jsluice, katana
+Matching
+  * relative findings ("/api/x") resolve against the app's origin;
+  * hosts are interchangeable only within the app's api_hosts (its origin and the
+    backends it proxies to); external hosts (staging, private IPs) must match exactly;
+  * {param} in the ground truth matches any one segment; a finding's own
+    placeholder ({id}, :id, ${…}) matches only a {param};
+  * GraphQL operations match on name — the tool reports them as ".../graphql#op".
 
-Scope filtering (--scope-filter, default: on):
-  Strips tool-output endpoints whose host:port does not belong to the target app.
-  Prevents the shared GraphQL/WebSocket/SOAP backends from inflating FP counts
-  when scanning non-saas apps.  Use --no-scope-filter to disable.
+Strict (default) vs lenient
+  strict   a finding that matches no ground-truth path is a false positive, including
+           findings on hosts outside the app (reported as out_of_scope)
+  lenient  additionally credits findings the route oracle confirms are served by the
+           benchmark (real but not referenced by the client, e.g. /actuator/health) and
+           ignores out-of-scope hosts. Both are always reported; --mode picks the headline.
+
+Assets
+  Findings that are static files (.js, .map, .css, .html, images, …) are not
+  endpoints: they are scored separately against the app's asset list and never
+  count as endpoint false positives.
+
+Formats (--format): spabench-v1 (default), linkfinder, xnlinkfinder, jsluice, katana, urls
+
+Examples
+  python evaluate.py --tool-output scan.json --app angular-permit
+  python evaluate.py --tool-output lf.txt --format linkfinder --app angular-permit --breakdown-by discovery_class
+  python evaluate.py --tool-output scan.json --app vue-portal --min-score 55 --pr-curve
+  python evaluate.py --legacy-v2 --manifest legacy/manifest-v2.0.json --tool-output scan.json --app angular-permit
 """
 
 import argparse
 import json
+import math
 import os
 import re
+import subprocess
 import sys
-from collections import defaultdict
-from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+from collections import Counter, defaultdict
+from urllib.parse import urlparse
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+
+ASSET_EXT = re.compile(r'\.(?:m?js|map|css|html?|json|wsdl|xml|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|txt|wasm)$', re.I)
+PLACEHOLDER = re.compile(r'^(\{[^}]*\}|:\w+|\$\{[^}]*\}|<[^>]+>)$')
+ID_LIKE = re.compile(r'^(\d+|[0-9a-f]{8,}|[0-9a-f]{8}-[0-9a-f-]{27,}|[A-Za-z]+-\d+)$', re.I)
 
 
-# ---------------------------------------------------------------------------
-# Per-app allowed host:port scopes
-# Endpoints outside these hosts are out-of-scope FPs caused by shared backends
-# being probed during every scan (GraphQL on 4002, WS on 4003, SOAP on 4004).
-# ---------------------------------------------------------------------------
+# ── loaders ─────────────────────────────────────────────────────────────────
 
-APP_SCOPE = {
-    'angular-permit': {
-        'localhost:3001',   # frontend
-        'localhost:4001',   # shared REST backend
-        '10.0.1.45:8080',   # internal IP — legitimate EP-B-004 style finding
-        '10.0.0.45:8080',   # variant seen in scan output
-        'staging-api.rc-permit.internal',
-        'auth.rc-permit.internal',
-    },
-    'angular-erp': {
-        'localhost:3002',   # shell frontend
-        'localhost:4001',   # shared REST backend
-        'localhost:3011', 'localhost:3012', 'localhost:3013', 'localhost:3014',
-        'localhost:3015', 'localhost:3016', 'localhost:3017', 'localhost:3018',
-        '10.0.1.45:8080',   # internal IP hardcoded in mfe-admin
-        '10.0.0.45:8080',
-    },
-    'react-ecommerce': {
-        'localhost:3003',   # frontend
-        'localhost:4001',   # shared REST backend
-    },
-    'vue-portal': {
-        'localhost:3004',   # frontend
-        'localhost:4001',   # shared REST backend
-        'localhost:4004',   # SOAP bridge — legitimately used by vue-portal
-    },
-    'nextjs-saas': {
-        'localhost:3005',   # frontend
-        'localhost:4001',   # shared REST backend
-        'localhost:4002',   # GraphQL backend — legitimately used by nextjs-saas
-        'localhost:4003',   # WebSocket backend — legitimately used by nextjs-saas
-    },
-}
-
-# Relative paths (no host) are always kept — they resolve to the target host
-# Paths containing only an internal hostname pattern are kept too
-_INTERNAL_HOSTNAME_RE = re.compile(r'\.(internal|local|corp|intranet)(:\d+)?$', re.I)
+def _lines(path):
+    with open(path, encoding='utf-8', errors='replace') as f:
+        return [l.strip() for l in f if l.strip() and not l.lstrip().startswith('#')]
 
 
-def canon_host(netloc):
-    """Canonicalise loopback host aliases so localhost, 127.0.0.1 and [::1] are
-    treated as the same host. Scans run with --target http://127.0.0.1 emit
-    127.0.0.1 URLs; the manifest and APP_SCOPE use localhost — without this they
-    would be scored as different hosts (everything out-of-scope)."""
-    h = netloc.lower()
-    return (h.replace('127.0.0.1', 'localhost')
-             .replace('[::1]', 'localhost')
-             .replace('::1', 'localhost'))
-
-
-def in_scope(url, app_id):
-    """Return True if url belongs to the allowed scope for app_id."""
-    allowed = APP_SCOPE.get(app_id)
-    if not allowed:
-        return True  # no scope defined → keep everything
-    try:
-        p = urlparse(url)
-        host = canon_host(p.netloc)
-        if not host:
-            return True   # relative URL — keep
-        if _INTERNAL_HOSTNAME_RE.search(host):
-            return True   # internal hostname → always keep (security finding)
-        return host in allowed
-    except Exception:
-        return True
-
-
-# ---------------------------------------------------------------------------
-# URL normalisation
-# ---------------------------------------------------------------------------
-
-def normalise_url(url):
-    url = url.strip()
-    fragment = ''
-    if '#' in url:
-        url, fragment = url.rsplit('#', 1)
-    try:
-        p = urlparse(url)
-        q = urlencode(sorted(parse_qs(p.query, keep_blank_values=True).items()), doseq=True) if p.query else ''
-        result = urlunparse(((p.scheme or 'http').lower(), canon_host(p.netloc), p.path.rstrip('/'), '', q, ''))
-    except Exception:
-        result = url.rstrip('/')
-    return result + ('#' + fragment if fragment else '')
-
-
-def _segs(url):
-    return [s for s in urlparse(url).path.split('/') if s]
-
-
-def url_matches(candidate, manifest_url):
-    """True if candidate matches manifest_url, including {param} wildcards."""
-    nc, nm = normalise_url(candidate), normalise_url(manifest_url)
-    if nc == nm:
-        return True
-    pc, pm = urlparse(nc), urlparse(nm)
-    if pc.scheme != pm.scheme or pc.netloc != pm.netloc:
-        return False
-    if pm.fragment and pc.fragment != pm.fragment:
-        return False
-    cs, ms = _segs(nc), _segs(nm)
-    if len(cs) != len(ms):
-        return False
-    return all((m.startswith('{') and m.endswith('}')) or c == m for c, m in zip(cs, ms))
-
-
-# ---------------------------------------------------------------------------
-# GraphQL operation identity
-#
-# All GraphQL resolvers share one HTTP URL (/api/graphql), so URL+host matching
-# cannot distinguish them. A GraphQL operation is identified by its operation
-# NAME, which the tool emits as a fragment (".../graphql#getUser") and the
-# manifest stores in discovery_notes ("Query getUser." / "Mutation updateUser.").
-# Matching by operation name is host-agnostic: the tool legitimately discovers
-# the operation regardless of whether it reports the proxy (:3005) or the live
-# backend (:4002) host.
-# ---------------------------------------------------------------------------
-
-_GQL_NOTE_RE = re.compile(r'\b(?:Query|Mutation|Subscription)\s+([A-Za-z_]\w*)', re.I)
-
-def gql_operation(url):
-    """Operation name (lowercased) from a tool URL fragment, else ''."""
-    if '#' in url:
-        return url.rsplit('#', 1)[1].strip().lower()
-    return ''
-
-def manifest_gql_operation(mep):
-    """Operation name for a GRAPHQL manifest entry (url fragment or notes)."""
-    op = gql_operation(mep.get('url', ''))
-    if op:
-        return op
-    m = _GQL_NOTE_RE.search(mep.get('discovery_notes', '') or '')
-    return m.group(1).lower() if m else ''
-
-
-def entry_matches(tep, mep):
-    """True if tool finding `tep` discovers manifest entry `mep`.
-
-    Endpoint discovery is evaluated by *endpoint/operation identity*, not HTTP
-    method: the tool's job is to surface the endpoint, and the manifest splits a
-    single source endpoint into several method-variant entries (GET/POST/PUT/
-    DELETE on the same path). Requiring method agreement would understate recall,
-    so matching is method-agnostic.
-
-    - GraphQL entries match by operation name (host/URL agnostic).
-    - REST entries match by URL pattern ({param} wildcards).
-    """
-    if (mep.get('method', '') or '').upper() == 'GRAPHQL':
-        mop = manifest_gql_operation(mep)
-        top = gql_operation(tep['url'])
-        if mop:
-            return top == mop
-        # Base GraphQL endpoint entry (no named operation): match the bare URL.
-        return '/graphql' in tep['url'].lower() and not top
-    return _path_matches(tep['url'], mep['url'])
-
-
-def _path_matches(cand, manifest_url):
-    """Path-only match with {param} wildcards, host-agnostic. The same API path
-    is the same endpoint whether the tool reports it relative, on the frontend
-    host (proxy), or on the backend host — the scope filter already guarantees
-    every candidate host is legitimate for this app, so distinguishing them only
-    inflates FP/dup counts. GraphQL is handled separately by operation name."""
-    cp = urlparse(normalise_url(cand)).path.rstrip('/')
-    mp = urlparse(normalise_url(manifest_url)).path.rstrip('/')
-    if cp == mp:
-        return True
-    cs = [s for s in cp.split('/') if s]
-    ms = [s for s in mp.split('/') if s]
-    if len(cs) != len(ms):
-        return False
-    return all((m.startswith('{') and m.endswith('}')) or c == m for c, m in zip(cs, ms))
-
-
-def canon_key(ep):
-    """Canonical identity of a tool finding, collapsing representation variants
-    (path params, concrete ids, trailing slash, blank query) so the same
-    endpoint reported several ways is not counted as several discoveries.
-
-    Host-agnostic: the same API path seen relative, on the frontend proxy host,
-    and on the backend host is ONE logical endpoint. Scope filtering has already
-    run by the time this is used, so every remaining host is legitimate for this
-    app and distinguishing them only inflates duplicate/FP counts. GraphQL
-    operations stay distinct via their fragment."""
-    u = ep['url']
-    frag = ''
-    if '#' in u:
-        u, frag = u.split('#', 1)
-    p = urlparse(u)
-    path = re.sub(r'\{[^}]+\}', '{id}', p.path.rstrip('/'))
-    path = re.sub(r'/(?:\d+|bench-[\w-]+|demo-[\w-]+)(?=/|$)', '/{id}', path)
-    return (path, frag.lower(), (ep.get('method') or 'GET').upper())
-
-
-def _reachable(url, method, timeout=8.0):
-    """True if the endpoint exists (any non-404 response to GET or the emitted
-    method). Used by --verify-reachable to separate real discoveries (non-404)
-    from genuine false positives (404 / connection error).
-
-    Conservative: a 404, connection error, OR timeout counts as NOT reachable.
-    This can only ever understate precision (never inflate it), so a degraded /
-    hung backend cannot produce a falsely high number — run against a responsive
-    target for an accurate result."""
-    import requests
-    requests.packages.urllib3.disable_warnings()
-    probe = re.sub(r'\{[^}]+\}', '1', url.split('#', 1)[0])
-    if not probe.startswith('http'):
-        return False
-    # On Windows/WSL2, 'localhost' may resolve to IPv6 (::1) first and hang while
-    # Docker only answers on IPv4 — force 127.0.0.1 so the probe is reliable.
-    probe = probe.replace('://localhost:', '://127.0.0.1:').replace('://localhost/', '://127.0.0.1/')
-    methods = ['GET']
-    m = (method or 'GET').upper()
-    if m in ('POST', 'PUT', 'DELETE', 'PATCH') and m not in methods:
-        methods.append(m)
-    for mm in methods:
-        try:
-            r = requests.request(mm, probe, timeout=(4, timeout), verify=False,
-                                 headers={'Authorization': 'Bearer x'},
-                                 allow_redirects=False)
-            if r.status_code != 404:
-                return True
-        except Exception:
-            pass
-    return False
-
-
-# ---------------------------------------------------------------------------
-# Format adapters
-# ---------------------------------------------------------------------------
-
-def _spabench(path):
-    d = json.load(open(path))
+def load_spabench(path):
+    with open(path, encoding='utf-8') as f:
+        d = json.load(f)
     out = []
-    for e in d.get('endpoints', []):
-        # main.py uses 'endpoint' key; manifest uses 'url' — handle both
-        url = e.get('url') or e.get('endpoint', '')
+    for e in d.get('endpoints', []) if isinstance(d, dict) else d:
+        url = e.get('url') or e.get('endpoint') or ''
         if url:
-            out.append({'url': url, 'method': e.get('method', 'GET')})
+            out.append({'url': url, 'method': (e.get('method') or '').upper() or None,
+                        'score': e.get('confidence_score', e.get('score'))})
     return out
 
-def _linkfinder(path):
+
+def load_linkfinder(path):
+    return [{'url': l, 'method': None} for l in _lines(path)]
+
+
+def load_xnlinkfinder(path):
+    try:
+        with open(path, encoding='utf-8') as f:
+            d = json.load(f)
+        items = d if isinstance(d, list) else d.get('results', d.get('endpoints', []))
+        return [{'url': i if isinstance(i, str) else i.get('url', ''), 'method': None} for i in items if i]
+    except ValueError:
+        return load_linkfinder(path)
+
+
+def load_jsluice(path):
     out = []
-    for line in open(path):
-        line = line.strip()
-        if not line or line.startswith('#'):
-            continue
-        if line.startswith('/'):
-            line = 'http://localhost' + line
-        elif not line.startswith('http'):
-            line = 'http://localhost/' + line
-        out.append({'url': line, 'method': 'GET'})
+    with open(path, encoding='utf-8', errors='replace') as f:
+        text = f.read().strip()
+    items = []
+    if text.startswith('['):
+        items = json.loads(text)
+    else:
+        for line in text.splitlines():
+            try:
+                items.append(json.loads(line))
+            except ValueError:
+                continue
+    for i in items:
+        url = i.get('url') or i.get('value') or ''
+        if url:
+            out.append({'url': url, 'method': (i.get('method') or '').upper() or None})
     return out
 
-def _xnlinkfinder(path):
-    d = json.load(open(path))
-    items = d if isinstance(d, list) else d.get('results', d.get('endpoints', []))
-    return [{'url': (i if isinstance(i, str) else i.get('url', '')), 'method': 'GET'} for i in items]
 
-def _jsluice(path):
-    d = json.load(open(path))
-    if not isinstance(d, list):
-        d = d.get('findings', [])
+def load_katana(path):
     out = []
-    for item in d:
-        url = item.get('value') or item.get('url', '')
-        if not url or '/' not in url:
-            continue
-        if url.startswith('/'):
-            url = 'http://localhost' + url
-        out.append({'url': url, 'method': item.get('method', 'GET')})
-    return out
-
-def _katana(path):
-    out = []
-    for line in open(path):
-        line = line.strip()
-        if not line:
-            continue
+    for line in _lines(path):
         try:
             item = json.loads(line)
-        except Exception:
+        except ValueError:
             continue
         req = item.get('request', item)
-        url = req.get('endpoint') or req.get('url') or item.get('endpoint', '')
+        url = req.get('endpoint') or req.get('url') or ''
         if url:
-            out.append({'url': url, 'method': req.get('method', 'GET')})
+            out.append({'url': url, 'method': (req.get('method') or '').upper() or None})
     return out
 
-LOADERS = {
-    'spabench-v1':  _spabench,
-    'linkfinder':   _linkfinder,
-    'xnlinkfinder': _xnlinkfinder,
-    'jsluice':      _jsluice,
-    'katana':       _katana,
-}
+
+LOADERS = {'spabench-v1': load_spabench, 'linkfinder': load_linkfinder, 'xnlinkfinder': load_xnlinkfinder,
+           'jsluice': load_jsluice, 'katana': load_katana, 'urls': load_linkfinder}
+METHOD_AWARE = {'spabench-v1', 'jsluice', 'katana'}
 
 
-# ---------------------------------------------------------------------------
-# Noise patterns
-# ---------------------------------------------------------------------------
+# ── normalisation ───────────────────────────────────────────────────────────
 
-def load_noise(noise_dir):
-    path = os.path.join(noise_dir, 'manifest-noise.json')
+def canon_host(netloc):
+    h = netloc.lower()
+    for a in ('127.0.0.1', '[::1]', '0.0.0.0'):
+        h = h.replace(a, 'localhost')
+    return h
+
+
+def split_url(url, origin):
+    """(host, path, fragment) with relative URLs resolved against origin."""
+    url = url.strip()
+    frag = ''
+    if '#' in url:
+        url, frag = url.split('#', 1)
+    if url.startswith('//'):
+        url = 'http:' + url
+    if not re.match(r'^[a-z][a-z0-9+.-]*://', url, re.I):
+        if not url.startswith('/'):
+            url = '/' + url
+        url = origin.rstrip('/') + url
+    p = urlparse(url)
+    path = re.sub(r'/{2,}', '/', p.path or '/').rstrip('/') or '/'
+    return canon_host(p.netloc), path, frag.strip()
+
+
+def segs(path):
+    return [s for s in path.split('/') if s]
+
+
+def template_key(path):
+    """Dedup key: id-like segments and placeholders collapse to {}."""
+    return '/' + '/'.join('{}' if PLACEHOLDER.match(s) or ID_LIKE.match(s) else s for s in segs(path))
+
+
+def path_match(finding_path, gt_path):
+    f, g = segs(finding_path), segs(gt_path)
+    if len(f) != len(g):
+        return False
+    for fs, gs in zip(f, g):
+        if gs.startswith('{') and gs.endswith('}'):
+            continue
+        if PLACEHOLDER.match(fs) or fs != gs:
+            return False
+    return True
+
+
+# ── ground truth ────────────────────────────────────────────────────────────
+
+class App:
+    def __init__(self, a):
+        self.id = a['id']
+        self.origin = a['origin']
+        self.api_hosts = {h.lower() for h in a['api_hosts']}
+        self.external_hosts = {h.lower() for h in a['external_hosts']}
+        self.endpoints = a['endpoints']
+        self.assets = a.get('assets', [])
+        # path-level units: (host-class, path or #op) → [entries]
+        self.units = defaultdict(list)
+        for e in self.endpoints:
+            self.units[self.unit_of_entry(e)].append(e)
+
+    def host_class(self, host):
+        if host in self.api_hosts:
+            return 'app'
+        if host in self.external_hosts:
+            return host
+        return None
+
+    def unit_of_entry(self, e):
+        if e['kind'] == 'graphql':
+            return ('graphql', e['graphql']['operation'])
+        host, path, _ = split_url(e['url'], self.origin)
+        return (self.host_class(host) or host, path)
+
+    def match_units(self, host, path, frag):
+        """Ground-truth units a finding (host, path, fragment) discovers."""
+        hc = self.host_class(host)
+        if hc is None:
+            return []
+        if frag and path.endswith('/graphql'):
+            return [u for u in self.units if u == ('graphql', frag)]
+        return [u for u in self.units if u[0] == hc and u[0] != 'graphql' and path_match(path, u[1])]
+
+
+def load_manifest(path, app_filter=None):
+    with open(path, encoding='utf-8') as f:
+        m = json.load(f)
+    if not str(m.get('version', '')).startswith('3.'):
+        raise SystemExit(f'{path} is a v{m.get("version")} manifest; use --legacy-v2 for v2 manifests')
+    apps = [App(a) for a in m['apps'] if not app_filter or a['id'] == app_filter]
+    if not apps:
+        raise SystemExit(f'no app {app_filter!r} in {path}')
+    return m, apps
+
+
+# ── vendor noise ────────────────────────────────────────────────────────────
+
+def load_noise(path=os.path.join(HERE, 'noise', 'manifest-noise.json')):
     if not os.path.exists(path):
-        return {}
-    d = json.load(open(path))
-    return {p['tag']: p.get('indicators', []) for p in d.get('patterns', [])}
+        return []
+    with open(path, encoding='utf-8') as f:
+        return [(p['tag'], ind) for p in json.load(f).get('patterns', []) for ind in p.get('indicators', [])]
 
-def classify_noise(url, patterns):
-    for tag, inds in patterns.items():
-        for ind in inds:
-            if ind.lower() in url.lower():
-                return tag
+
+def noise_tag(url, rules):
+    """Tag of the first vendor-noise rule a URL matches. Indicators with a '/' must
+    match a whole run of path segments; bare words must equal a whole segment;
+    indicators containing spaces (PDF operators) match the raw string."""
+    low = url.lower()
+    path = '/' + '/'.join(segs(urlparse(low).path if '://' in low else low.split('?')[0])) + '/'
+    for tag, ind in rules:
+        i = ind.lower()
+        if ' ' in i or '[' in i:
+            hit = i in low
+        elif '/' in i:
+            hit = ('/' + i.strip('/') + '/') in path
+        else:
+            hit = ('/' + i + '/') in path
+        if hit:
+            return tag
     return None
 
 
-# ---------------------------------------------------------------------------
-# Manifest loading
-# ---------------------------------------------------------------------------
+# ── statistics ──────────────────────────────────────────────────────────────
 
-def load_manifest(path, app_filter=None):
-    d = json.load(open(path))
-    eps = []
-    for app in d.get('apps', []):
-        if app_filter and app['id'] != app_filter:
+def wilson(k, n, z=1.959964):
+    if n == 0:
+        return (0.0, 0.0)
+    p = k / n
+    d = 1 + z * z / n
+    c = (p + z * z / (2 * n)) / d
+    h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+    return (round(max(0.0, c - h), 4), round(min(1.0, c + h), 4))
+
+
+def prf(tp_pred, n_pred, tp_gt, n_gt):
+    p = tp_pred / n_pred if n_pred else 0.0
+    r = tp_gt / n_gt if n_gt else 0.0
+    f = 2 * p * r / (p + r) if p + r else 0.0
+    return {'precision': round(p, 4), 'recall': round(r, 4), 'f1': round(f, 4),
+            'precision_ci95': wilson(tp_pred, n_pred), 'recall_ci95': wilson(tp_gt, n_gt),
+            'tp_findings': tp_pred, 'findings': n_pred, 'tp_ground_truth': tp_gt, 'ground_truth': n_gt}
+
+
+# ── core ────────────────────────────────────────────────────────────────────
+
+def evaluate_app(app, findings, oracle=None, method_aware=False):
+    """Score one app. findings: [{'url','method'}]."""
+    served_assets = None
+    if oracle is not None:
+        from spabench.artifacts import served_files
+        served_assets = {split_url(u, app.origin)[:2] for u, _ in served_files(app.id)}
+
+    endpoint_keys = {}        # dedup key → {'units', 'methods', 'scope', 'raw'}
+    asset_keys = {}
+    for f in findings:
+        host, path, frag = split_url(f['url'], app.origin)
+        if ASSET_EXT.search(path) and not (frag and path.endswith('/graphql')):
+            asset_keys.setdefault((host, path), f['url'])
             continue
-        for ep in app.get('endpoints', []):
-            ep['_app_id'] = app['id']
-            eps.append(ep)
-    return eps
+        hc = app.host_class(host)
+        key = ('graphql', frag) if (frag and path.endswith('/graphql')) else (hc or host, template_key(path))
+        rec = endpoint_keys.setdefault(key, {'units': set(), 'methods': set(), 'scope': hc is not None,
+                                             'raw': f['url'], 'host': host, 'path': path, 'frag': frag})
+        rec['units'] |= set(app.match_units(host, path, frag))
+        if f.get('method'):
+            rec['methods'].add(f['method'])
 
+    gt_units = set(app.units)
+    found_units = set().union(*[r['units'] for r in endpoint_keys.values()]) if endpoint_keys else set()
+    in_scope = [r for r in endpoint_keys.values() if r['scope']]
+    out_scope = [r for r in endpoint_keys.values() if not r['scope']]
+    matched = [r for r in endpoint_keys.values() if r['units']]
+    unmatched = [r for r in in_scope if not r['units']]
 
-# ---------------------------------------------------------------------------
-# Core evaluation
-# ---------------------------------------------------------------------------
+    real_uncurated = []
+    if oracle is not None:
+        for r in unmatched:
+            for meth in (sorted(r['methods']) or ['GET']):
+                url = f"http://{r['host'] if r['host'] not in ('', 'app') else urlparse(app.origin).netloc}{r['path']}"
+                ok, _ = oracle.resolve(url, 'POST' if r['frag'] else meth)
+                if ok and r['frag']:
+                    ok = r['frag'] in oracle.backends.gql_ops
+                if ok:
+                    real_uncurated.append(r)
+                    break
 
-def evaluate(manifest_eps, tool_eps, noise_patterns, app_id=None, scope_filter=True,
-             other_manifest_eps=None, verify_reachable=False):
-    # ── Scope filtering ──────────────────────────────────────────────────────
-    filtered_out = 0
-    if scope_filter and app_id:
-        scoped = [ep for ep in tool_eps if in_scope(ep['url'], app_id)]
-        filtered_out = len(tool_eps) - len(scoped)
-        tool_eps = scoped
+    strict = prf(len(matched), len(endpoint_keys), len(found_units), len(gt_units))
+    lenient = prf(len(matched) + len(real_uncurated), len(in_scope), len(found_units), len(gt_units))
 
-    # ── Canonical deduplication — collapse representation variants (path-param
-    # placeholders, concrete ids, trailing slash, blank query) so one endpoint
-    # reported several ways is counted as one discovery, not several FPs.
-    seen, deduped = set(), []
-    for ep in tool_eps:
-        k = canon_key(ep)
-        if k not in seen:
-            seen.add(k)
-            deduped.append(ep)
+    # method level: only meaningful when the tool reports methods
+    method_level = None
+    if method_aware:
+        gt_m = {(u, e['method']) for u, es in app.units.items() for e in es}
+        found_m = set()
+        tp_pred = n_pred = 0
+        for r in endpoint_keys.values():
+            ms = r['methods'] or {'GET'}
+            for m in ms:
+                n_pred += 1
+                hit = {(u, e['method']) for u in r['units'] for e in app.units[u]
+                       if e['method'] == m or (e['method'] in ('GRAPHQL', 'WS') and r['units'])}
+                if hit:
+                    tp_pred += 1
+                    found_m |= hit
+        method_level = prf(tp_pred, n_pred, len(found_m), len(gt_m))
 
-    # ── Matching — each manifest entry is satisfied if ANY tool finding
-    # discovers it (method-agnostic; GraphQL by operation name). Findings may
-    # satisfy several method-variant entries on one path, so the tool is credited
-    # once per endpoint it actually surfaced. Recall = matched manifest entries.
-    matched_ids = {mep['id'] for mep in manifest_eps
-                   if any(entry_matches(tep, mep) for tep in deduped)}
-    # A finding is a "real discovery" if it matches some manifest entry; the rest
-    # are candidate false positives.
-    match_find = [tep for tep in deduped
-                  if any(entry_matches(tep, m) for m in manifest_eps)]
-    nonmatch   = [tep for tep in deduped if tep not in match_find]
+    def breakdown(field, only_test_cases=False):
+        d = defaultdict(lambda: [0, 0])
+        for u, es in app.units.items():
+            vals = {e.get(field) for e in es if (e.get('test_case') or not only_test_cases)} - {None}
+            for v in vals:
+                d[v][1] += 1
+                d[v][0] += u in found_units
+        return {k: {'found': a, 'total': b, 'recall': round(a / b, 4) if b else 0.0} for k, (a, b) in sorted(d.items())}
 
-    # ── Cross-app exclusion — a non-matching finding that belongs to ANOTHER
-    # app's manifest is a real shared-backend endpoint discovered legitimately,
-    # not a false positive against this app.
-    cross_app_fps = 0
-    if other_manifest_eps:
-        kept = []
-        for tep in nonmatch:
-            if any(entry_matches(tep, m) for m in other_manifest_eps):
-                cross_app_fps += 1
-            else:
-                kept.append(tep)
-        nonmatch = kept
+    auth_units = {u for u, es in app.units.items() if any(e['auth_required'] for e in es)}
+    public_units = gt_units - auth_units
+    tc_units = {u for u, es in app.units.items() if any(e['test_case'] for e in es)}
 
-    # ── Reachability-verified precision — a remaining finding that responds
-    # (non-404) is a real API surface (a valid discovery), not a false positive.
-    # The curated manifest is a technique-coverage subset, so an uncurated but
-    # reachable endpoint is a true find. Recall stays strictly manifest-based.
-    verified_real = 0
-    if verify_reachable and nonmatch:
-        from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=6) as _ex:
-            flags = list(_ex.map(lambda t: _reachable(t['url'], t.get('method', 'GET')), nonmatch))
-        nonmatch = [t for t, ok in zip(nonmatch, flags) if not ok]
-        verified_real = sum(1 for ok in flags if ok)
+    fps = [r['raw'] for r in unmatched if r not in real_uncurated] + [r['raw'] for r in out_scope]
+    rules = load_noise()
+    noise = Counter(t for t in (noise_tag(u, rules) for u in fps) if t)
 
-    fps = nonmatch
-    fns = [e for e in manifest_eps if e['id'] not in matched_ids]
-    tp, fp, fn, total = len(matched_ids), len(fps), len(fns), len(manifest_eps)
-    # Precision counts real discoveries (manifest-matching findings + reachable
-    # uncurated endpoints) against all scored findings; recall is manifest-only.
-    valid = len(match_find) + verified_real
-
-    precision = valid / (valid + fp) if (valid + fp) > 0 else 0.0
-    recall    = tp / total         if total > 0         else 0.0
-    f1        = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
-
-    noise_fps = [{'url': e['url'], 'noise_tag': classify_noise(e['url'], noise_patterns)}
-                 for e in fps if classify_noise(e['url'], noise_patterns)]
-    noise_rate = len(noise_fps) / fp if fp > 0 else 0.0
-
-    unauth = [e for e in manifest_eps if not e.get('auth_required')]
-    auth   = [e for e in manifest_eps if e.get('auth_required')]
-    r_unauth = sum(1 for e in unauth if e['id'] in matched_ids) / len(unauth) if unauth else 0.0
-    r_auth   = sum(1 for e in auth   if e['id'] in matched_ids) / len(auth)   if auth   else 0.0
-
-    def breakdown(field):
-        d = defaultdict(lambda: {'total': 0, 'found': 0})
-        for ep in manifest_eps:
-            k = ep.get(field, 'unknown')
-            d[k]['total'] += 1
-            if ep['id'] in matched_ids:
-                d[k]['found'] += 1
-        return {k: dict(v) for k, v in d.items()}
+    asset_gt = {split_url(x['url'], app.origin)[:2] for x in app.assets}
+    asset_found = set(asset_keys)
+    asset_tp = asset_found & asset_gt
+    asset_real = {k for k in asset_found if served_assets and k in served_assets}
 
     return {
-        'precision': round(precision, 4),
-        'recall':    round(recall, 4),
-        'f1':        round(f1, 4),
-        'true_positives':  tp,
-        'false_positives': fp,
-        'false_negatives': fn,
-        'total_manifest':  total,
-        'out_of_scope_filtered': filtered_out,
-        'cross_app_filtered':    cross_app_fps,
-        'verified_real_discoveries': verified_real,
-        'vendor_noise_fps':  noise_fps,
-        'vendor_noise_rate': round(noise_rate, 4),
-        'recall_unauthenticated': round(r_unauth, 4),
-        'recall_authenticated':   round(r_auth, 4),
-        'per_technique': breakdown('technique'),
-        'per_phase':     breakdown('phase'),
-        'per_app':       breakdown('_app_id'),
-        'missed_endpoints': [{'id': e['id'], 'url': e['url'], 'technique': e['technique']} for e in fns],
-        'matched_ids': sorted(matched_ids),
+        'app': app.id,
+        'path_level': {'strict': strict, 'lenient': lenient},
+        'method_level': method_level,
+        'counts': {
+            'findings_raw': len(findings), 'endpoint_findings': len(endpoint_keys), 'asset_findings': len(asset_keys),
+            'matched_findings': len(matched), 'out_of_scope': len(out_scope), 'unmatched_in_scope': len(unmatched),
+            'real_uncurated': len(real_uncurated), 'ground_truth_paths': len(gt_units), 'found_paths': len(found_units),
+        },
+        'recall_authenticated': round(len(found_units & auth_units) / len(auth_units), 4) if auth_units else None,
+        'recall_public': round(len(found_units & public_units) / len(public_units), 4) if public_units else None,
+        'recall_test_cases': round(len(found_units & tc_units) / len(tc_units), 4) if tc_units else None,
+        'per_discovery_class': breakdown('discovery_class'),
+        'per_design_technique': breakdown('design_technique', only_test_cases=True),
+        'per_kind': breakdown('kind'),
+        'assets': {'ground_truth': len(asset_gt), 'found': len(asset_tp),
+                   'recall': round(len(asset_tp) / len(asset_gt), 4) if asset_gt else None,
+                   'reported': len(asset_found), 'served': len(asset_real) if served_assets is not None else None},
+        'hits': {e['id']: (u in found_units) for u, es in app.units.items() for e in es},
+        'missed': sorted(e['id'] for u, es in app.units.items() if u not in found_units for e in es),
+        'false_positives': sorted(fps),
+        'vendor_noise': {'fps': sum(noise.values()), 'rate': round(sum(noise.values()) / len(fps), 4) if fps else 0.0,
+                         'by_tag': dict(noise)},
+        'real_uncurated': sorted(r['raw'] for r in real_uncurated),
     }
 
 
-# ---------------------------------------------------------------------------
-# Output helpers
-# ---------------------------------------------------------------------------
-
-def _pct(v):
-    return '{:.1f}%'.format(v * 100)
-
-def print_summary(res, name='tool'):
-    W = 60
-    print('\n' + '=' * W)
-    print('  SPABench Evaluation -- {}'.format(name))
-    print('=' * W)
-    print('  Manifest endpoints       : {}'.format(res['total_manifest']))
-    print('  True positives           : {}'.format(res['true_positives']))
-    print('  Out-of-scope filtered    : {}'.format(res.get('out_of_scope_filtered', 0)))
-    print('  Cross-app (other manifest): {}'.format(res.get('cross_app_filtered', 0)))
-    if res.get('verified_real_discoveries'):
-        print('  Verified real (non-404)  : {}'.format(res['verified_real_discoveries']))
-    print('  False positives          : {}'.format(res['false_positives']))
-    print('  False negatives          : {}'.format(res['false_negatives']))
-    print('-' * W)
-    print('  Precision                : {}'.format(_pct(res['precision'])))
-    print('  Recall                   : {}'.format(_pct(res['recall'])))
-    print('  F1                       : {}'.format(_pct(res['f1'])))
-    print('-' * W)
-    print('  Recall (unauthenticated) : {}'.format(_pct(res['recall_unauthenticated'])))
-    print('  Recall (auth-gated)      : {}'.format(_pct(res['recall_authenticated'])))
-    print('-' * W)
-    n = len(res['vendor_noise_fps'])
-    print('  Vendor noise FPs         : {} ({} of FPs)'.format(n, _pct(res['vendor_noise_rate'])))
-    print('=' * W + '\n')
-
-def print_breakdown(res, by):
-    data = res.get('per_' + by, {})
-    print('  Breakdown by {}:'.format(by))
-    print('  ' + '-' * 58)
-    print('  {:<38} {:>5} {:>5} {:>8}'.format('Dimension', 'Found', 'Total', 'Recall'))
-    print('  ' + '-' * 58)
-    for k in sorted(data):
-        v = data[k]
-        r = v['found'] / v['total'] if v['total'] else 0
-        mark = 'v' if r == 1.0 else ('~' if r > 0 else 'x')
-        print('  {} {:<37} {:>5} {:>5} {:>8}'.format(mark, k, v['found'], v['total'], _pct(r)))
-    print('  ' + '-' * 58 + '\n')
-
-def print_missed(res, limit=25):
-    missed = res['missed_endpoints']
-    if not missed:
-        print('  Perfect recall -- no missed endpoints!\n')
-        return
-    print('  Missed ({} total):'.format(len(missed)))
-    for ep in missed[:limit]:
-        print('    x [{}] {} -- {}'.format(ep['technique'], ep['id'], ep['url']))
-    if len(missed) > limit:
-        print('    ... and {} more'.format(len(missed) - limit))
-    print()
-
-def render_html(results):
-    rows = '\n'.join(
-        '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td>'
-        '<td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>'.format(
-            r['tool'], _pct(r['precision']), _pct(r['recall']), _pct(r['f1']),
-            r['true_positives'], r['false_positives'],
-            _pct(r['recall_unauthenticated']), _pct(r['recall_authenticated']),
-            _pct(r['vendor_noise_rate']))
-        for r in results)
-    return ('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SPABench</title>'
-            '<style>body{font-family:system-ui;padding:2rem}'
-            'table{border-collapse:collapse;width:100%}'
-            'th,td{border:1px solid #ddd;padding:8px 12px;text-align:right}'
-            'th{background:#1a1a2e;color:#fff}'
-            'td:first-child,th:first-child{text-align:left}'
-            'tr:hover{background:#f5f5f5}</style></head><body>'
-            '<h1>SPABench Tool Comparison</h1><table><thead><tr>'
-            '<th>Tool</th><th>Precision</th><th>Recall</th><th>F1</th>'
-            '<th>TPs</th><th>FPs</th><th>Recall (unauth)</th>'
-            '<th>Recall (auth)</th><th>Noise Rate</th>'
-            '</tr></thead><tbody>{}</tbody></table></body></html>'.format(rows))
+def combine(results, mode):
+    """Micro (pooled) and macro (mean over apps) path-level scores."""
+    pool = defaultdict(int)
+    for r in results:
+        s = r['path_level'][mode]
+        for k in ('tp_findings', 'findings', 'tp_ground_truth', 'ground_truth'):
+            pool[k] += s[k]
+    micro = prf(pool['tp_findings'], pool['findings'], pool['tp_ground_truth'], pool['ground_truth'])
+    macro = {k: round(sum(r['path_level'][mode][k] for r in results) / len(results), 4) for k in ('precision', 'recall', 'f1')}
+    return {'micro': micro, 'macro': macro}
 
 
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
+def pr_curve(app, findings, oracle):
+    scores = sorted({f['score'] for f in findings if isinstance(f.get('score'), (int, float))})
+    out = []
+    for t in scores:
+        r = evaluate_app(app, [f for f in findings if (f.get('score') or 0) >= t], oracle)
+        s = r['path_level']['strict']
+        out.append({'threshold': t, 'precision': s['precision'], 'recall': s['recall'], 'findings': s['findings']})
+    return out
+
+
+# ── output ──────────────────────────────────────────────────────────────────
+
+def pct(v):
+    return '   n/a' if v is None else f'{v * 100:5.1f}%'
+
+
+def print_result(r, mode, name):
+    s = r['path_level'][mode]
+    c = r['counts']
+    print(f"\n== {name} on {r['app']}  [{mode}]")
+    print(f"  precision {pct(s['precision'])}  CI95 {s['precision_ci95']}   ({s['tp_findings']}/{s['findings']} finding-paths)")
+    print(f"  recall    {pct(s['recall'])}  CI95 {s['recall_ci95']}   ({s['tp_ground_truth']}/{s['ground_truth']} ground-truth paths)")
+    print(f"  F1        {pct(s['f1'])}")
+    other = 'lenient' if mode == 'strict' else 'strict'
+    o = r['path_level'][other]
+    print(f"  ({other}: precision {pct(o['precision'])}, recall {pct(o['recall'])})")
+    if r['method_level']:
+        m = r['method_level']
+        print(f"  method level: precision {pct(m['precision'])}, recall {pct(m['recall'])}")
+    print(f"  recall public {pct(r['recall_public'])} | auth-gated {pct(r['recall_authenticated'])} | test cases {pct(r['recall_test_cases'])}")
+    print(f"  findings: {c['findings_raw']} raw → {c['endpoint_findings']} endpoint paths + {c['asset_findings']} assets; "
+          f"{c['matched_findings']} matched, {c['real_uncurated']} real-uncurated, {c['unmatched_in_scope'] - c['real_uncurated']} unmatched, {c['out_of_scope']} out of scope")
+    if r['vendor_noise']['fps']:
+        print(f"  vendor noise: {r['vendor_noise']['fps']} of the false positives ({pct(r['vendor_noise']['rate'])})")
+    a = r['assets']
+    if a['ground_truth']:
+        print(f"  assets: {a['found']}/{a['ground_truth']} listed assets found ({a['reported']} asset URLs reported)")
+
+
+def print_breakdown(r, by):
+    data = r[f'per_{by}']
+    print(f'  by {by}:')
+    for k, v in data.items():
+        print(f"    {k:34s} {v['found']:4d}/{v['total']:<4d} {pct(v['recall'])}")
+
+
+def legacy(argv):
+    """--legacy-v2: run the v2.x evaluator unchanged (reproduces the submitted numbers)."""
+    argv = [a for a in argv if a != '--legacy-v2']
+    if not any(a == '--manifest' or a.startswith('--manifest=') for a in argv):
+        argv = ['--manifest', os.path.join(HERE, 'legacy', 'manifest-v2.0.json')] + argv
+    return subprocess.call([sys.executable, os.path.join(HERE, 'legacy', 'evaluate_v2.py')] + argv)
+
 
 def main():
-    ap = argparse.ArgumentParser(
-        description='SPABench evaluate.py',
-        epilog=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    ap.add_argument('--manifest',         required=True)
-    ap.add_argument('--tool-output',      dest='tool_output')
-    ap.add_argument('--format',           default='spabench-v1', choices=list(LOADERS))
-    ap.add_argument('--breakdown-by',     choices=['technique', 'phase', 'app'])
-    ap.add_argument('--report')
-    ap.add_argument('--compare',          nargs='+', metavar='FILE')
-    ap.add_argument('--app')
-    ap.add_argument('--noise-dir',        default='noise')
-    ap.add_argument('--show-missed',      action='store_true')
-    ap.add_argument('--verbose',          action='store_true')
-    ap.add_argument('--no-scope-filter',  dest='scope_filter', action='store_false', default=True,
-                    help='Disable host-scope filtering (includes cross-app backend FPs in scoring)')
-    ap.add_argument('--verify-reachable', action='store_true',
-                    help='Probe non-manifest in-scope findings; count reachable (non-404) '
-                         'endpoints as real discoveries rather than false positives '
-                         '(reachability-verified precision). Requires the target to be up.')
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if '--legacy-v2' in sys.argv:
+        return legacy(sys.argv[1:])
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--manifest', default=os.path.join(HERE, 'manifest.json'))
+    ap.add_argument('--tool-output', required=True)
+    ap.add_argument('--format', default='spabench-v1', choices=sorted(LOADERS))
+    ap.add_argument('--app', help='score one app (recommended; required for relative findings)')
+    ap.add_argument('--name', help='tool name for the report')
+    ap.add_argument('--mode', choices=['strict', 'lenient'], default='strict', help='headline numbers (both are always computed)')
+    ap.add_argument('--no-oracle', action='store_true', help='skip the route oracle (lenient = strict minus out-of-scope)')
+    ap.add_argument('--min-score', type=float, help='drop findings whose score is below this (spabench-v1 confidence_score)')
+    ap.add_argument('--pr-curve', action='store_true', help='precision/recall at every score threshold')
+    ap.add_argument('--breakdown-by', choices=['discovery_class', 'design_technique', 'kind'])
+    ap.add_argument('--show-missed', action='store_true')
+    ap.add_argument('--report', help='write the full JSON result here')
+    ap.add_argument('--legacy-v2', action='store_true', help='use the v2.x evaluator (manifest defaults to legacy/manifest-v2.0.json)')
     args = ap.parse_args()
 
-    if not os.path.exists(args.manifest):
-        print('ERROR: manifest not found: ' + args.manifest, file=sys.stderr)
-        return 1
+    _, apps = load_manifest(args.manifest, args.app)
+    findings = LOADERS[args.format](args.tool_output)
+    if args.min_score is not None:
+        findings = [f for f in findings if (f.get('score') or 0) >= args.min_score]
+    oracle = None
+    if not args.no_oracle:
+        from spabench.oracle import Oracle
+        oracle = Oracle()
+    if len(apps) > 1 and any(not re.match(r'^[a-z]+://', f['url'], re.I) for f in findings):
+        print('note: relative findings are resolved against each app\'s origin; pass --app for per-app runs',
+              file=sys.stderr)
 
-    manifest_eps = load_manifest(args.manifest, args.app)
-    if not manifest_eps:
-        print('ERROR: no endpoints loaded (app=' + str(args.app) + ')', file=sys.stderr)
-        return 1
-
-    # Other apps' manifest entries — used to exclude cross-app shared-backend
-    # discoveries from this app's false positives (only meaningful when --app set).
-    other_eps = None
-    if args.app:
-        this_ids = {e['id'] for e in manifest_eps}
-        other_eps = [e for e in load_manifest(args.manifest) if e['id'] not in this_ids]
-
-    noise = load_noise(args.noise_dir) if os.path.isdir(args.noise_dir) else {}
-
-    # Compare mode
-    if args.compare:
-        all_res = []
-        for path in args.compare:
-            name = os.path.splitext(os.path.basename(path))[0]
-            try:
-                eps = _spabench(path)
-            except Exception as e:
-                print('WARN: {}: {}'.format(path, e), file=sys.stderr)
-                continue
-            res = evaluate(manifest_eps, eps, noise, app_id=args.app,
-                           scope_filter=args.scope_filter,
-                           other_manifest_eps=other_eps,
-                           verify_reachable=args.verify_reachable)
-            res['tool'] = name
-            all_res.append(res)
-            print_summary(res, name)
-            if args.breakdown_by:
-                print_breakdown(res, args.breakdown_by)
-        if args.report:
-            if args.report.endswith('.html'):
-                open(args.report, 'w').write(render_html(all_res))
-            else:
-                json.dump(all_res, open(args.report, 'w'), indent=2)
-            print('Report: ' + args.report)
-        return 0
-
-    # Single-tool mode
-    if not args.tool_output:
-        ap.error('--tool-output is required unless --compare is used')
-    if not os.path.exists(args.tool_output):
-        print('ERROR: not found: ' + args.tool_output, file=sys.stderr)
-        return 1
-
-    try:
-        tool_eps = LOADERS[args.format](args.tool_output)
-    except Exception as e:
-        print('ERROR loading tool output: ' + str(e), file=sys.stderr)
-        return 1
-
-    name = os.path.splitext(os.path.basename(args.tool_output))[0]
-    res = evaluate(manifest_eps, tool_eps, noise, app_id=args.app,
-                   scope_filter=args.scope_filter,
-                   other_manifest_eps=other_eps,
-                   verify_reachable=args.verify_reachable)
-    res['tool'] = name
-    res['manifest'] = args.manifest
-    res['app_filter'] = args.app
-
-    print_summary(res, name)
-    if args.breakdown_by:
-        print_breakdown(res, args.breakdown_by)
-    if args.show_missed or args.verbose:
-        print_missed(res)
-    if args.verbose:
-        print('  Matched: ' + ', '.join(res['matched_ids']) + '\n')
+    name = args.name or os.path.splitext(os.path.basename(args.tool_output))[0]
+    results = [evaluate_app(a, findings, oracle, args.format in METHOD_AWARE) for a in apps]
+    for r, a in zip(results, apps):
+        print_result(r, args.mode, name)
+        if args.breakdown_by:
+            print_breakdown(r, args.breakdown_by)
+        if args.show_missed and r['missed']:
+            print('  missed:', ', '.join(r['missed']))
+        if args.pr_curve:
+            r['pr_curve'] = pr_curve(a, findings, oracle)
+            for p in r['pr_curve']:
+                print(f"    score ≥ {p['threshold']:>5}: P {pct(p['precision'])} R {pct(p['recall'])} ({p['findings']} paths)")
+    report = {'tool': name, 'format': args.format, 'manifest_version': '3', 'mode': args.mode, 'apps': results}
+    if len(results) > 1:
+        report['combined'] = {m: combine(results, m) for m in ('strict', 'lenient')}
+        c = report['combined'][args.mode]
+        print(f"\n== all apps [{args.mode}]  micro P {pct(c['micro']['precision'])} R {pct(c['micro']['recall'])} F1 {pct(c['micro']['f1'])}"
+              f"  |  macro P {pct(c['macro']['precision'])} R {pct(c['macro']['recall'])} F1 {pct(c['macro']['f1'])}")
     if args.report:
-        if args.report.endswith('.html'):
-            open(args.report, 'w').write(render_html([res]))
-        else:
-            json.dump(res, open(args.report, 'w'), indent=2)
-        print('Report: ' + args.report)
+        with open(args.report, 'w', encoding='utf-8', newline='\n') as f:
+            json.dump(report, f, indent=2)
+        print('report written to', args.report)
     return 0
 
 

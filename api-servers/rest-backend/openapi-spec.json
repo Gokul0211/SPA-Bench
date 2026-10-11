@@ -2,25 +2,22 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Angular Permit-to-Work API",
-    "description": "REST API for the Permit-to-Work SPA (App A). Served at /api-docs to satisfy TC-P4-007 (openapi_discovery) and /openapi.json for TC-P4-008 (openapi_path_enumeration).",
+    "description": "REST API used by the Permit-to-Work web client.",
     "version": "1.0.0",
     "contact": {
-      "name": "SPABench",
-      "url": "https://github.com/spabench/spabench"
+      "name": "Platform API team"
     }
   },
   "servers": [
     {
-      "url": "http://localhost:3001",
-      "description": "App A — Angular Permit (proxied to rest-backend:4001)"
-    },
-    {
       "url": "http://localhost:4001",
-      "description": "REST backend direct"
+      "description": "API server"
     }
   ],
   "security": [
-    { "BearerAuth": [] }
+    {
+      "BearerAuth": []
+    }
   ],
   "components": {
     "securitySchemes": {
@@ -34,69 +31,192 @@
       "PermitType": {
         "type": "object",
         "properties": {
-          "code":  { "type": "string", "example": "HOT_WORK" },
-          "label": { "type": "string", "example": "Hot Work Permit" }
+          "code": {
+            "type": "string",
+            "example": "HOT_WORK"
+          },
+          "label": {
+            "type": "string",
+            "example": "Hot Work Permit"
+          }
         }
       },
       "WorkOrder": {
         "type": "object",
         "properties": {
-          "workOrderId":  { "type": "string" },
-          "workSiteId":   { "type": "string" },
-          "status":       { "type": "string", "enum": ["OPEN", "IN_PROGRESS", "CLOSED"] },
-          "supervisorId": { "type": "integer" },
-          "hazardLevel":  { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
-          "createdAt":    { "type": "string", "format": "date-time" },
-          "updatedAt":    { "type": "string", "format": "date-time" }
+          "workOrderId": {
+            "type": "string"
+          },
+          "workSiteId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "IN_PROGRESS",
+              "CLOSED"
+            ]
+          },
+          "supervisorId": {
+            "type": "integer"
+          },
+          "hazardLevel": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "CreatePermitRequest": {
         "type": "object",
-        "required": ["workSiteId", "startDate", "endDate", "hazardLevel", "supervisorId"],
+        "required": [
+          "workSiteId",
+          "startDate",
+          "endDate",
+          "hazardLevel",
+          "supervisorId"
+        ],
         "properties": {
-          "workSiteId":   { "type": "string",  "description": "Unique work site identifier" },
-          "startDate":    { "type": "string",  "format": "date", "description": "Permit start date" },
-          "endDate":      { "type": "string",  "format": "date", "description": "Permit end date" },
-          "hazardLevel":  { "type": "string",  "enum": ["LOW", "MEDIUM", "HIGH"] },
-          "supervisorId": { "type": "integer", "description": "Employee ID of the responsible supervisor" }
+          "workSiteId": {
+            "type": "string",
+            "description": "Unique work site identifier"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Permit start date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Permit end date"
+          },
+          "hazardLevel": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH"
+            ]
+          },
+          "supervisorId": {
+            "type": "integer",
+            "description": "Employee ID of the responsible supervisor"
+          }
         }
       },
       "PermitDetails": {
         "type": "object",
         "properties": {
-          "permitId":         { "type": "string" },
-          "permitType":       { "type": "string" },
-          "workSiteId":       { "type": "string" },
-          "status":           { "type": "string", "enum": ["PENDING_APPROVAL", "APPROVED", "ACTIVE", "CLOSED", "REJECTED"] },
-          "hazardLevel":      { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
-          "supervisorId":     { "type": "integer" },
-          "startDate":        { "type": "string", "format": "date" },
-          "endDate":          { "type": "string", "format": "date" },
-          "approvedBy":       { "type": "string" },
-          "approvedAt":       { "type": "string", "format": "date-time" },
-          "conditions":       { "type": "array", "items": { "type": "string" } }
+          "permitId": {
+            "type": "string"
+          },
+          "permitType": {
+            "type": "string"
+          },
+          "workSiteId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_APPROVAL",
+              "APPROVED",
+              "ACTIVE",
+              "CLOSED",
+              "REJECTED"
+            ]
+          },
+          "hazardLevel": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH"
+            ]
+          },
+          "supervisorId": {
+            "type": "integer"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "approvedBy": {
+            "type": "string"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       },
       "LoginRequest": {
         "type": "object",
-        "required": ["username", "password"],
+        "required": [
+          "username",
+          "password"
+        ],
         "properties": {
-          "username":   { "type": "string" },
-          "password":   { "type": "string", "format": "password" },
-          "rememberMe": { "type": "boolean", "default": false }
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "format": "password"
+          },
+          "rememberMe": {
+            "type": "boolean",
+            "default": false
+          }
         }
       },
       "LoginResponse": {
         "type": "object",
         "properties": {
-          "token":      { "type": "string", "description": "JWT access token" },
-          "expiresIn":  { "type": "integer", "example": 28800 },
-          "tokenType":  { "type": "string", "example": "Bearer" },
+          "token": {
+            "type": "string",
+            "description": "JWT access token"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "example": 28800
+          },
+          "tokenType": {
+            "type": "string",
+            "example": "Bearer"
+          },
           "user": {
             "type": "object",
             "properties": {
-              "username": { "type": "string" },
-              "role":     { "type": "string" }
+              "username": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              }
             }
           }
         }
@@ -104,17 +224,29 @@
       "Order": {
         "type": "object",
         "properties": {
-          "orderId":   { "type": "string" },
-          "status":    { "type": "string" },
-          "total":     { "type": "number" },
+          "orderId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          },
           "lineItems": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "sku":       { "type": "string" },
-                "qty":       { "type": "integer" },
-                "unitPrice": { "type": "number" }
+                "sku": {
+                  "type": "string"
+                },
+                "qty": {
+                  "type": "integer"
+                },
+                "unitPrice": {
+                  "type": "number"
+                }
               }
             }
           }
@@ -123,16 +255,27 @@
       "LegacyReport": {
         "type": "object",
         "properties": {
-          "id":          { "type": "string" },
-          "name":        { "type": "string" },
-          "generatedAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "Error": {
         "type": "object",
         "properties": {
-          "error":  { "type": "string" },
-          "detail": { "type": "string" }
+          "error": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
         }
       }
     }
@@ -141,15 +284,19 @@
     "/api/auth/login": {
       "post": {
         "summary": "Form-based login",
-        "description": "EP-A-010 — recovered from auth.service.ts via source map. Returns a JWT for subsequent authenticated requests.",
+        "description": "Exchange username and password for a bearer token.",
         "operationId": "login",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
             }
           }
         },
@@ -158,20 +305,33 @@
             "description": "Successful login",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
               }
             }
           },
-          "401": { "description": "Invalid credentials", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/api/rc_permit/getPermitType": {
       "get": {
         "summary": "List permit type codes",
-        "description": "EP-A-001 — base URL stored in environment.apiUrl, renamed to this.o in minified output.",
+        "description": "List the permit type codes.",
         "operationId": "getPermitType",
-        "tags": ["Permits"],
+        "tags": [
+          "Permits"
+        ],
         "responses": {
           "200": {
             "description": "Array of permit type codes",
@@ -180,86 +340,146 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "permitTypes": { "type": "array", "items": { "$ref": "#/components/schemas/PermitType" } }
+                    "permitTypes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PermitType"
+                      }
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "description": "Unauthorized" }
+          "401": {
+            "description": "Unauthorized"
+          }
         }
       }
     },
     "/api/rc_permit/getWorkOrder": {
       "get": {
         "summary": "Retrieve a work order by ID",
-        "description": "EP-A-002 — base URL flows through 3 files via Angular constructor injection. Exclusively discoverable via inter-procedural analysis.",
+        "description": "Fetch a work order by id.",
         "operationId": "getWorkOrder",
-        "tags": ["Permits"],
+        "tags": [
+          "Permits"
+        ],
         "parameters": [
           {
             "name": "workOrderId",
             "in": "query",
             "required": true,
             "description": "Unique work order identifier",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "Work order details", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkOrder" } } } },
-          "400": { "description": "workOrderId missing" },
-          "401": { "description": "Unauthorized" }
+          "200": {
+            "description": "Work order details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkOrder"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "workOrderId missing"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
         }
       }
     },
     "/api/rc_permit/createPermit": {
       "post": {
         "summary": "Create a new permit",
-        "description": "EP-A-003 — POST endpoint with typed request body. All 5 parameters recoverable from the CreatePermitRequest TypeScript interface via source map.",
+        "description": "Create a permit-to-work request.",
         "operationId": "createPermit",
-        "tags": ["Permits"],
+        "tags": [
+          "Permits"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CreatePermitRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/CreatePermitRequest"
+              }
             }
           }
         },
         "responses": {
-          "201": { "description": "Permit created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PermitDetails" } } } },
-          "400": { "description": "Validation error" },
-          "401": { "description": "Unauthorized" }
+          "201": {
+            "description": "Permit created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
         }
       }
     },
     "/api/rc_permit/getPermitDetails": {
       "get": {
         "summary": "Get full permit details",
-        "description": "EP-A-004 — exclusive Phase 1.5. Only found via source map decompilation of permit.service.ts. No competitor found this endpoint.",
+        "description": "Fetch the full record of one permit.",
         "operationId": "getPermitDetails",
-        "tags": ["Permits"],
+        "tags": [
+          "Permits"
+        ],
         "parameters": [
           {
             "name": "id",
             "in": "query",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "Permit details", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PermitDetails" } } } },
-          "400": { "description": "id missing" },
-          "401": { "description": "Unauthorized" }
+          "200": {
+            "description": "Permit details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermitDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "id missing"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
         }
       }
     },
     "/api/admin/legacy-reports": {
       "get": {
         "summary": "List legacy admin reports",
-        "description": "EP-A-007 — URL assembled from obfuscated rotation-shifted string array. Security-relevant: admin CRUD endpoint.",
+        "description": "List archived reports (administrators only).",
         "operationId": "getLegacyReports",
-        "tags": ["Admin"],
+        "tags": [
+          "Admin"
+        ],
         "responses": {
           "200": {
             "description": "List of legacy reports",
@@ -268,23 +488,34 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "reports": { "type": "array", "items": { "$ref": "#/components/schemas/LegacyReport" } }
+                    "reports": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LegacyReport"
+                      }
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "description": "Unauthorized" },
-          "403": { "description": "Admin role required" }
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Admin role required"
+          }
         }
       }
     },
     "/api/v1/orders": {
       "get": {
         "summary": "List orders (legacy v1)",
-        "description": "EP-A-008 — false branch of feature-flag ternary. Still callable even when the feature flag enables v2.",
+        "description": "List orders (v1 format).",
         "operationId": "listOrdersV1",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "responses": {
           "200": {
             "description": "Legacy orders list",
@@ -293,23 +524,34 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "_version": { "type": "string" },
-                    "orders":   { "type": "array", "items": { "$ref": "#/components/schemas/Order" } }
+                    "_version": {
+                      "type": "string"
+                    },
+                    "orders": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Order"
+                      }
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "description": "Unauthorized" }
+          "401": {
+            "description": "Unauthorized"
+          }
         }
       }
     },
     "/api/v2/orders": {
       "get": {
         "summary": "List orders (v2 with pagination)",
-        "description": "EP-A-009 — true branch of the same feature-flag ternary. Both /api/v1/orders and /api/v2/orders must appear in tool output.",
+        "description": "List orders with line items (v2 format).",
         "operationId": "listOrdersV2",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "responses": {
           "200": {
             "description": "Paginated orders list",
@@ -318,14 +560,23 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data":       { "type": "array", "items": { "$ref": "#/components/schemas/Order" } },
-                    "pagination": { "type": "object" }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Order"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object"
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "description": "Unauthorized" }
+          "401": {
+            "description": "Unauthorized"
+          }
         }
       }
     }

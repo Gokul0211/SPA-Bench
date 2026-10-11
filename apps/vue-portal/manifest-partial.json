@@ -1,21 +1,33 @@
 {
-  "app_id": "vue-portal",
-  "framework": "Vue 3 + Nuxt (form-auth, SOAP bridge)",
-  "frontend_port": 3004,
-  "backend_port": 3004,
-  "auth_server_port": 4001,
-  "endpoint_count": 18,
+  "schema": "spabench-partial/3",
+  "app": {
+    "id": "vue-portal",
+    "name": "Government Portal",
+    "framework": "vue",
+    "framework_version": "3 / Nuxt 3 (emulated)",
+    "build_tool": "nuxt",
+    "port": 3004,
+    "origin": "http://localhost:3004",
+    "api_hosts": [
+      "localhost:3004",
+      "localhost:4001",
+      "localhost:4004"
+    ],
+    "external_hosts": [],
+    "source_maps_exposed": false,
+    "auth_method": "form",
+    "description": "Nuxt portal with cookie-session login, source maps blocked (404), and SOAP operations bridged as REST paths built at runtime from a WSDL."
+  },
   "endpoints": [
     {
       "id": "EP-D-001",
-      "url": "http://localhost:3004/api/users/{id}",
       "method": "GET",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [
-        "ts_service_file_recovery"
-      ],
+      "url": "http://localhost:3004/api/users/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "id",
@@ -24,24 +36,20 @@
           "required": true
         }
       ],
-      "source_file": "src/services/UserService.ts",
-      "minified_location": "_nuxt/entry.js:1:8200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-002",
-      "url": "http://localhost:3004/api/legacy/bridge/getEmployeeRecord",
       "method": "POST",
-      "phase": "2",
-      "technique": "soap_bridge_dynamic",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/legacy/bridge/getEmployeeRecord",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "runtime": true
+      },
+      "design_technique": "soap_bridge_dynamic",
       "parameters": [
         {
           "name": "employeeId",
@@ -50,24 +58,20 @@
           "required": true
         }
       ],
-      "source_file": "_nuxt/entry.js",
-      "minified_location": "_nuxt/entry.js:1:15200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "legacy_attack_surface"
     },
     {
       "id": "EP-D-003",
-      "url": "http://localhost:3004/api/legacy/bridge/updatePayroll",
       "method": "POST",
-      "phase": "2",
-      "technique": "soap_bridge_dynamic",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/legacy/bridge/updatePayroll",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "runtime": true
+      },
+      "design_technique": "soap_bridge_dynamic",
       "parameters": [
         {
           "name": "employeeId",
@@ -82,24 +86,20 @@
           "required": true
         }
       ],
-      "source_file": "_nuxt/entry.js",
-      "minified_location": "_nuxt/entry.js:1:15600",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "legacy_attack_surface"
     },
     {
       "id": "EP-D-004",
-      "url": "http://localhost:3004/api/legacy/bridge/generateReport",
       "method": "POST",
-      "phase": "2",
-      "technique": "soap_bridge_dynamic",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/legacy/bridge/generateReport",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "runtime": true
+      },
+      "design_technique": "soap_bridge_dynamic",
       "parameters": [
         {
           "name": "reportType",
@@ -114,26 +114,17 @@
           "required": true
         }
       ],
-      "source_file": "_nuxt/entry.js",
-      "minified_location": "_nuxt/entry.js:1:16000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "legacy_attack_surface"
     },
     {
       "id": "EP-D-005",
-      "url": "http://localhost:3004/api/users",
       "method": "GET",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
+      "url": "http://localhost:3004/api/users",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "department",
@@ -142,24 +133,17 @@
           "required": false
         }
       ],
-      "source_file": "src/services/UserService.ts",
-      "minified_location": "_nuxt/entry.js:1:9000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-006",
-      "url": "http://localhost:3004/api/users",
       "method": "POST",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/users",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "username",
@@ -180,24 +164,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/UserService.ts",
-      "minified_location": "_nuxt/entry.js:1:9600",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-007",
-      "url": "http://localhost:3004/api/users/{id}",
       "method": "PUT",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/users/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -212,24 +189,17 @@
           "required": false
         }
       ],
-      "source_file": "src/services/UserService.ts",
-      "minified_location": "_nuxt/entry.js:1:10200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-008",
-      "url": "http://localhost:3004/api/users/{id}",
       "method": "DELETE",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/users/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -238,24 +208,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/UserService.ts",
-      "minified_location": "_nuxt/entry.js:1:10800",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-009",
-      "url": "http://localhost:3004/api/users/{id}/status",
       "method": "PATCH",
-      "phase": "2",
-      "technique": "url_concat_direct",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/users/{id}/status",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "url_concat_direct",
       "parameters": [
         {
           "name": "id",
@@ -270,43 +233,29 @@
           "required": true
         }
       ],
-      "source_file": "src/services/UserService.ts",
-      "minified_location": "_nuxt/entry.js:1:11200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-010",
-      "url": "http://localhost:3004/api/departments",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_concat_direct",
-      "exclusive": false,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "src/services/DepartmentService.ts",
-      "minified_location": "_nuxt/entry.js:1:12000",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:3004/api/departments",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "url_concat_direct",
+      "parameters": [],
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-011",
-      "url": "http://localhost:3004/api/departments",
       "method": "POST",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/departments",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "name",
@@ -321,24 +270,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/DepartmentService.ts",
-      "minified_location": "_nuxt/entry.js:1:12600",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-012",
-      "url": "http://localhost:3004/api/permits",
       "method": "GET",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/permits",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "status",
@@ -347,24 +289,17 @@
           "required": false
         }
       ],
-      "source_file": "src/services/PermitService.ts",
-      "minified_location": "_nuxt/entry.js:1:13000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-013",
-      "url": "http://localhost:3004/api/permits",
       "method": "POST",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/permits",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "type",
@@ -385,24 +320,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/PermitService.ts",
-      "minified_location": "_nuxt/entry.js:1:13600",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-014",
-      "url": "http://localhost:3004/api/permits/{id}",
       "method": "DELETE",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/permits/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -411,24 +339,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/PermitService.ts",
-      "minified_location": "_nuxt/entry.js:1:14200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-015",
-      "url": "http://localhost:3004/api/documents/{id}",
       "method": "GET",
-      "phase": "2",
-      "technique": "template_literal_resolved",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/documents/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "url_template_literal",
       "parameters": [
         {
           "name": "id",
@@ -437,24 +358,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/DocumentService.ts",
-      "minified_location": "_nuxt/entry.js:1:17000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-016",
-      "url": "http://localhost:3004/api/documents/upload",
       "method": "POST",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/documents/upload",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "file",
@@ -469,24 +383,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/DocumentService.ts",
-      "minified_location": "_nuxt/entry.js:1:17600",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-017",
-      "url": "http://localhost:3004/api/audit-log",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_concat_direct",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:3004/api/audit-log",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "url_concat_direct",
       "parameters": [
         {
           "name": "from",
@@ -495,36 +402,49 @@
           "required": false
         }
       ],
-      "source_file": "src/services/AuditService.ts",
-      "minified_location": "_nuxt/entry.js:1:18000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-D-018",
-      "url": "http://localhost:3004/api/legacy/reports",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_concat_direct",
-      "exclusive": false,
-      "redundant_techniques": [
-        "ts_service_file_recovery"
-      ],
-      "parameters": [],
-      "source_file": "src/services/LegacyService.ts",
-      "minified_location": "_nuxt/entry.js:1:18500",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:3004/api/legacy/reports",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "url_concat_direct",
+      "parameters": [],
+      "security_finding_type": "admin_crud_endpoint"
+    },
+    {
+      "id": "EP-D-S-001",
+      "method": "POST",
+      "url": "http://localhost:3004/api/auth/login",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": false,
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-D-S-002",
+      "method": "POST",
+      "url": "http://localhost:3004/api/legacy/session/keepalive",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "noscript_tag",
+      "parameters": [],
+      "security_finding_type": "none"
+    }
+  ],
+  "assets": [
+    {
+      "id": "AS-D-001",
+      "url": "http://localhost:3004/fallback-legacy.js",
+      "design_technique": "noscript_tag"
     }
   ]
 }

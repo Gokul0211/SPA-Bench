@@ -1,462 +1,241 @@
-# SPABench v2.0
+# SPABench v3.0.0
 
-**A controlled benchmark for SPA API endpoint discovery tools.**
+**A controlled benchmark for API-endpoint discovery in single-page applications.**
 
-SPABench is the evaluation suite released alongside *"Shadow Endpoints: Hybrid Static–Dynamic Discovery of Hidden API Surfaces in Obfuscated Single-Page Applications"*. It ships 5 Dockerized SPA applications, 4 backend API servers, 108 ground-truth endpoints with technique tags, and a scoring script.
+SPABench is the evaluation suite released with *"Shadow Endpoints: Hybrid Static–Dynamic Discovery of Hidden API
+Surfaces in Obfuscated Single-Page Applications"*. It ships five Dockerised SPAs, four API servers, a ground truth
+derived from the served artifacts, a scorer, and an offline audit that proves the benchmark is internally
+consistent.
 
-> **Paper:** Shadow Endpoints — Hybrid Static–Dynamic Discovery of Hidden API Surfaces in Obfuscated SPAs  
-> **Authors:** Gokul Iyer, Aditya Ghadi, Aditya More, Parth Choutapelly, Kavya Huliyurdurga  
+> **Authors:** Gokul Iyer, Aditya Ghadi, Aditya More, Parth Choutapelly, Kavya Huliyurdurga
 > **DOI:** 10.5281/zenodo.XXXXXXX *(to be assigned)*
 
----
-
-## What SPABench Is (and Isn't)
-
-SPABench is a **technique characterization benchmark**, not a population-level recall estimate. Each of the 108 manifest endpoints tests exactly one discovery technique. Hitting 108/108 means every listed technique works; it says nothing about what a tool will find on an arbitrary production SPA.
-
-The design answers a precise question: *"Does this tool handle constructor injection chains, source map decompilation, GraphQL introspection?"* — with a deterministic yes/no per technique.
+v3.0.0 is a breaking revision of v2.0 — see [Changes from v2.0](#changes-from-v20) and [CHANGELOG.md](CHANGELOG.md).
+Numbers reported against v2.0 are not comparable with v3.0.0.
 
 ---
 
-## Repository Structure
+## What it measures (and what it doesn't)
 
-```
-SPA-Bench-main/
-├── apps/
-│   ├── angular-permit/          # App A — Angular 8, port 3001
-│   ├── angular-erp/             # App B — Angular 17 Module Federation, port 3002
-│   ├── react-ecommerce/         # App C — React 18 / Vite, port 3003
-│   ├── vue-portal/              # App D — Vue 3 / Nuxt, port 3004
-│   └── nextjs-saas/             # App E — Next.js / React 19, port 3005
-├── api-servers/
-│   ├── rest-backend/            # REST API, port 4001
-│   ├── graphql-backend/         # GraphQL with introspection enabled, port 4002
-│   ├── websocket-backend/       # WebSocket server, port 4003
-│   └── soap-bridge/             # SOAP/WSDL bridge, port 4004
-├── docs/
-│   ├── EVALUATION_GUIDE.md
-│   ├── TECHNIQUE_REFERENCE.md
-│   └── ADDING_TEST_CASES.md
-├── noise/                       # Vendor library noise fixtures (false-positive testing)
-├── output/                      # Frozen results and technique breakdowns
-├── tools/                       # Scanner dependencies (see .gitignore — not committed)
-├── manifest.json                # Ground truth: 108 endpoints across 5 apps
-├── manifest.schema.json
-├── evaluate.py
-├── sanity_check.py
-├── validate_manifest.py
-├── build_manifest.py
-└── docker-compose.yml
-```
+Each app is a small client that talks to a real API. The ground truth is **every API endpoint the client
+references** — not a hand-picked subset — so precision means something: a finding is either one of those
+endpoints or it is not. Within that surface, the hand-designed **test cases** exercise specific discovery
+techniques (constructor-injection chains, string-array obfuscation, environment files leaked through source maps,
+Module Federation, WSDL-driven URLs, GraphQL introspection, …).
 
-> **Note:** `tools/` is excluded via `.gitignore` (Go toolchain, binaries, ~400MB). Not needed to run the benchmark — only required if building the Shadow Endpoints scanner from source.
+Every endpoint carries a **discovery class** computed by `build_manifest.py` from what is actually served — the
+easiest artifact in which the endpoint can be recovered and whether it appears there as a literal or must be
+assembled. The class is derived, never typed by hand, and the build fails if an annotation contradicts the
+artifacts.
+
+SPABench is small and synthetic. It characterises *techniques*; recall here does not predict recall on arbitrary
+production SPAs. See [Limitations](#limitations).
+
+<!-- BEGIN generated:totals -->
+168 endpoints (112 hand-designed test cases + 56 further client calls), 135 distinct paths, 16 assets, across 5 apps. 146 endpoints require login; by kind: 17 graphql, 149 rest, 2 websocket.
+<!-- END generated:totals -->
+
+### Apps
+
+<!-- BEGIN generated:apps -->
+| App | Emulates | Host port | Source maps | Login | Endpoints | of which test cases | Distinct paths | Assets |
+|---|---|---|---|---|---|---|---|---|
+| angular-permit | angular 8 (emulated), angular-cli-webpack | 3001 | served | bearer | 63 | 22 | 54 | 3 |
+| angular-erp | angular 17 (emulated), webpack5-module-federation | 3002 | served | bearer | 28 | 18 | 22 | 10 |
+| react-ecommerce | react 18 (emulated), vite | 3003 | served | bearer | 22 | 20 | 14 | 2 |
+| vue-portal | vue 3 / Nuxt 3 (emulated), nuxt | 3004 | blocked (404) | form | 20 | 18 | 15 | 1 |
+| nextjs-saas | nextjs 14 (emulated), nextjs-compiler | 3005 | served | totp | 35 | 34 | 30 | 0 |
+| **total** | | | | | **168** | **112** | **135** | **16** |
+<!-- END generated:apps -->
+
+| App | What it exercises |
+|---|---|
+| angular-permit | API on a separate origin; lazily loaded admin/reports chunks; a disabled (commented-out) mobile chunk; HTML attributes (`ng-include`, `onclick`, `formaction`, inline `import()`); string-array obfuscation; a development environment file leaked through the bundle's source map |
+| angular-erp | Module Federation shell with 9 remotes loaded on navigation; a background-sync Web Worker; a private-network URL in a remote; a Spring-style actuator that no client references |
+| react-ecommerce | public catalogue + authenticated account area; a checkout chunk loaded on demand; a Web Worker that fetches recommendations; an IndexedDB request cache |
+| vue-portal | cookie-session login; source maps blocked (404); SOAP operations exposed as REST paths whose names are read from a WSDL at runtime; a `<noscript>` fallback script |
+| nextjs-saas | REST + GraphQL + WebSockets behind one origin; TOTP second factor; chunks referenced through `_buildManifest.js` and the webpack runtime chunk map; server code leaked into client chunks; two GraphQL operations that appear in no client artifact |
+
+### Discovery classes
+
+<!-- BEGIN generated:classes -->
+| Discovery class | Endpoints | Meaning |
+|---|---|---|
+| `html_literal` | 1 | path is written in the served HTML |
+| `bundle_literal` | 106 | every literal piece of the path is inside one string literal of a served bundle |
+| `bundle_composed` | 36 | assembled in a served bundle from several literals/variables (needs value-flow) |
+| `sourcemap_literal` | 1 | literal only in the TypeScript sources shipped in a source map |
+| `sourcemap_composed` | 3 | composed, and only in source-map sources |
+| `runtime_data` | 3 | the last piece comes from data fetched at runtime (WSDL operations) |
+| `graphql_client_operation` | 2 | GraphQL operation named in a client query |
+| `graphql_sourcemap_operation` | 13 | GraphQL operation named only in source-map sources |
+| `graphql_introspection_only` | 2 | GraphQL operation named nowhere in the client; schema introspection only |
+| `probe_only` | 1 | referenced by no client code; found only by probing well-known paths |
+<!-- END generated:classes -->
+
+The full list — every endpoint with its class, the artifacts it is present in and its test-case design — is in
+[docs/TEST_CASES.md](docs/TEST_CASES.md) (generated).
 
 ---
 
-## Quick Start
+## Quick start
 
-### Prerequisites
-
-- Docker and Docker Compose
-- Python 3.8+
-
-### 1. Start the Benchmark Environment
+Prerequisites: Docker with Compose, Python 3.9+ (`pip install jsonschema` for schema validation; the rest is
+standard library).
 
 ```bash
-git clone https://github.com/Gokul0211/SPA-Bench.git
-cd SPA-Bench
-
-docker compose up -d
+docker compose up -d --build
+python sanity_check.py            # every endpoint answered by a real handler (needs the containers)
+python audit/bench_audit.py all   # offline consistency proof (no containers needed)
 ```
 
-Wait ~15 seconds for the SPAs to initialize, then verify:
+| Service | Host port | |
+|---|---|---|
+| angular-permit | 3001 | |
+| angular-erp shell / remotes | 3002 / 3011–3018 | |
+| react-ecommerce | 3003 | |
+| vue-portal | 3004 | |
+| nextjs-saas | 3005 | |
+| REST / GraphQL / WebSocket / SOAP | 4001 / 4002 / 4003 / 4004 | also reachable same-origin through each app's nginx |
+
+**Accounts.** `benchuser` / `benchpass` (operator) and `benchadmin` / `benchpass` (admin). Every app shows a login
+form; nextjs-saas then asks for a TOTP code (secret `JBSWY3DPEHPK3PXP`, 30 s step). Protected endpoints require
+a real login: the static development token is accepted only if the backends run with `BENCH_ALLOW_STATIC_TOKEN=1`,
+which benchmark runs must not set.
+
+---
+
+## Scoring a tool
 
 ```bash
-python sanity_check.py --manifest manifest.json
+python evaluate.py --tool-output results.json --app angular-permit
+python evaluate.py --tool-output lf.txt --format linkfinder --app vue-portal --breakdown-by discovery_class
+python evaluate.py --tool-output results.json --app nextjs-saas --min-score 55 --pr-curve --report out.json
 ```
 
-All endpoints should report reachable (HTTP 200/401/etc.).
+Formats: `spabench-v1` (default; `{"endpoints": [{"url"|"endpoint": …, "method": …, "confidence_score": …}]}`),
+`linkfinder`, `xnlinkfinder`, `jsluice` (JSON lines), `katana` (JSONL), `urls` (one per line). URLs may be
+absolute or relative to the app.
 
-### 2. Run Your Tool
+**Rules** (details in [docs/EVALUATION_GUIDE.md](docs/EVALUATION_GUIDE.md)):
 
-```
-App A (Angular 8 Permit):        http://localhost:3001
-App B (Angular 17 ERP):          http://localhost:3002
-App C (React 18 E-Commerce):     http://localhost:3003
-App D (Vue 3 Government Portal): http://localhost:3004
-App E (Next.js SaaS Dashboard):  http://localhost:3005
-```
+- the unit is a **distinct path template per app** (GraphQL: the operation name, reported as `…/graphql#op`);
+  precision and recall use the same unit; method-level scores are added for tools that report methods;
+- relative findings resolve against the app's origin; hosts are interchangeable only among the app's own API
+  hosts; staging hosts and private IPs must match exactly;
+- **strict** (default): anything that matches no ground-truth path is a false positive, including findings on
+  unrelated hosts; **lenient**: additionally credits findings the route oracle confirms are served by the
+  benchmark, and ignores unrelated hosts. Both are always reported;
+- static files (JS, maps, CSS, …) are scored separately as asset discovery and never count against endpoint
+  precision;
+- Wilson 95 % intervals, per-class / per-technique / per-app breakdowns, a per-entry hit map (for paired tests),
+  vendor-noise tagging.
 
-### 3. Evaluate
+`--legacy-v2 --manifest legacy/manifest-v2.0.json` runs the v2.0 scorer unchanged, to reproduce numbers computed
+with v2.0.
+
+### Running the scanner and the baselines
 
 ```bash
-# All apps
-python evaluate.py \
-  --manifest manifest.json \
-  --tool-output your-results.json \
-  --breakdown-by technique \
-  --show-missed
-
-# Single app
-python evaluate.py \
-  --manifest manifest.json \
-  --tool-output your-results.json \
-  --app angular-permit \
-  --breakdown-by technique
+python run_authenticated_scans.py                 # Shadow Endpoints (default: ../../refactored/main.py)
+python run_competitor_scans.py                    # LinkFinder, xnLinkFinder, JSLuice, Katana
+python run_competitor_scans.py --input served+sources
 ```
 
-### 4. Stop
+Both runners score with the identical `evaluate.py` call and write `RESULTS.md` + `run_meta.json` (tool versions,
+commands, inputs, timestamps). The static baselines receive the app's complete served JavaScript inventory read
+from the repository — what perfect crawling would hand them; `--input served+sources` also gives them every
+source-map source. Tool versions are pinned (xnLinkFinder 8.2, jsluice v0.0.0-20240110145140-0ddfab153e06,
+Katana 1.6.1, LinkFinder vendored copy recorded by hash).
+
+---
+
+## Repository layout
+
+```
+apps/<app>/                 client: dist/ (or .next/) served by nginx, src/ (sources shipped in the maps),
+                            nginx/*.conf, Dockerfile, manifest-partial.json (hand-written ground-truth input)
+api-servers/                rest-backend (4001), graphql-backend (4002), websocket-backend (4003), soap-bridge (4004)
+spabench/                   shared helpers: served-artifact corpus (artifacts.py), route oracle (oracle.py)
+manifest.json               ground truth — built, never edited by hand
+manifest.schema.json        JSON Schema of manifest.json
+build_manifest.py           partials + served artifacts → manifest.json (--check)
+validate_manifest.py        schema + rebuild equality + semantic rules
+evaluate.py                 scorer (legacy/evaluate_v2.py for v2 reproduction)
+sanity_check.py             live check against the containers (--offline: via the oracle)
+audit/bench_audit.py        offline audit: served, ground-truth, maps, leaks, reachability, consistency
+make_docs.py                regenerates the tables in this README and docs/TEST_CASES.md (--check)
+scripts/sync_sourcemaps.py  keeps every served map in sync with the app sources (--check)
+run_*_scans.py              tool runners
+tests/                      python -m unittest discover -s tests
+noise/                      vendor-noise indicators used to tag false positives
+legacy/                     v2.0 manifest and scorer, for reproducing v2.0 numbers
+docs/                       evaluation guide, technique vocabulary, test-case list, how to add cases
+```
+
+`tools/` (third-party binaries) and `output/` (scan outputs) are not tracked.
+
+---
+
+## Checking the benchmark itself
 
 ```bash
-docker compose down
+python build_manifest.py --check         # manifest.json == what the partials + artifacts produce
+python validate_manifest.py              # schema + semantics
+python scripts/sync_sourcemaps.py --check
+python make_docs.py --check
+python audit/bench_audit.py all          # everything below, offline
+python -m unittest discover -s tests
 ```
 
----
-
-## The 108 Ground-Truth Endpoints
-
-### Per-App Summary
-
-| App | Framework | Port | Source Maps | GT Endpoints | Key Techniques |
-|-----|-----------|------|-------------|--------------|----------------|
-| angular-permit | Angular 8 | 3001 | ✅ Yes | 25 | DI chain, source map recovery, environment.ts, feature-flag conditionals |
-| angular-erp | Angular 17 | 3002 | ✅ Yes | 21 | Module Federation remoteEntry, Webpack registry harvest, background sync worker |
-| react-ecommerce | React 18/Vite | 3003 | ✅ Yes | 28 | JSX source recovery, fetch interception, Axios wrapper, IndexedDB, recommendation worker |
-| vue-portal | Vue 3/Nuxt | 3004 | ❌ Blocked | 25 | SOAP bridge dynamic interception, Vue Composition API, WSDL introspection |
-| nextjs-saas | Next.js/React 19 | 3005 | ✅ Yes | 28 | GraphQL introspection (11 ops), WebSocket, React useEffect, TOTP service |
-| **Total** | | | | **108** | |
-
-### Endpoint Distribution by Method
-
-| Method | Count | % |
-|--------|-------|---|
-| GET | 45 | 42% |
-| POST | 25 | 23% |
-| GraphQL | 12 | 11% |
-| DELETE | 11 | 10% |
-| PUT | 8 | 7% |
-| PATCH | 5 | 5% |
-| WebSocket | 2 | 2% |
-
-### Full Endpoint List
-
-**App A — angular-permit (Angular 8, 25 endpoints)**
-
-| ID | Method | URL | Technique |
-|----|--------|-----|-----------|
-| EP-A-001 | GET | `http://localhost:4001/api/rc_permit/getPermitType` | `url_concat_direct` |
-| EP-A-002 | GET | `http://localhost:4001/api/rc_permit/getWorkOrder` | `inter_proc_constructor_multi` |
-| EP-A-003 | POST | `http://localhost:4001/api/rc_permit/createPermit` | `param_ts_interface` |
-| EP-A-004 | GET | `http://localhost:4001/api/rc_permit/getPermitDetails` | `ts_service_file_recovery` |
-| EP-A-005 | GET | `https://staging-api.rc-permit.internal/v2` | `environment_ts_recovery` |
-| EP-A-006 | POST | `https://auth.rc-permit.internal/oauth/token` | `environment_ts_recovery` |
-| EP-A-007 | GET | `http://localhost:4001/api/admin/legacy-reports` | `url_array_assembly` |
-| EP-A-008 | GET | `http://localhost:4001/api/v1/orders` | `url_conditional_feature_flag` |
-| EP-A-009 | GET | `http://localhost:4001/api/v2/orders` | `url_conditional_feature_flag` |
-| EP-A-010 | POST | `http://localhost:4001/api/auth/login` | `auth_service_recovery` |
-| EP-A-011 | DELETE | `http://localhost:4001/api/rc_permit/deletePermit/{id}` | `ts_service_file_recovery` |
-| EP-A-012 | PUT | `http://localhost:4001/api/rc_permit/updatePermit/{id}` | `inter_proc_constructor_multi` |
-| EP-A-013 | GET | `http://localhost:4001/api/compliance/status` | `ts_service_file_recovery` |
-| EP-A-014 | POST | `http://localhost:4001/api/compliance/submit` | `param_ts_interface` |
-| EP-A-015 | GET | `http://localhost:4001/api/hazard/assessment/{id}` | `url_concat_direct` |
-| EP-A-016 | POST | `http://localhost:4001/api/hazard/report` | `param_ts_interface` |
-| EP-A-017 | GET | `http://localhost:4001/api/users/list` | `ts_service_file_recovery` |
-| EP-A-018 | PUT | `http://localhost:4001/api/users/{id}/role` | `inter_proc_constructor_multi` |
-| EP-A-019 | DELETE | `http://localhost:4001/api/users/{id}` | `auth_service_recovery` |
-| EP-A-020 | GET | `http://localhost:4001/api/reports/audit` | `url_array_assembly` |
-| EP-A-021 | POST | `http://localhost:4001/api/reports/export` | `param_ts_interface` |
-| EP-A-022 | GET | `http://localhost:4001/api/reports/scheduled` | `url_conditional_feature_flag` |
-| EP-A-023 | GET | `http://localhost:4001/api/mobile/legacy/sync` | `ts_service_file_recovery` |
-| EP-A-024 | POST | `http://localhost:4001/api/mobile/legacy/push` | `url_concat_direct` |
-| EP-A-025 | GET | `http://localhost:4001/api/admin/config` | `environment_ts_recovery` |
-
-**App B — angular-erp (Angular 17 Module Federation, 21 endpoints)**
-
-| ID | Method | URL | Technique |
-|----|--------|-----|-----------|
-| EP-B-001 | GET | `http://localhost:3011/remoteEntry.js` | `module_federation_remote_entry` |
-| EP-B-002 | GET | `http://localhost:3012/remoteEntry.js` | `module_federation_remote_entry` |
-| EP-B-003 | GET | `http://localhost:3002/api/inventory/items` | `webpack_registry_unnavigated` |
-| EP-B-004 | GET | `http://10.0.1.45:8080/internal/api` | `webpack_registry_unnavigated` |
-| EP-B-005 | POST | `http://localhost:3002/api/auth/login` | `fetch_interception` |
-| EP-B-006 | GET | `http://localhost:3002/actuator/mappings` | `spring_actuator_mappings` |
-| EP-B-007 | GET | `http://localhost:3002/api/crm/contacts` | `webpack_registry_unnavigated` |
-| EP-B-008 | POST | `http://localhost:3002/api/crm/contacts` | `fetch_interception` |
-| EP-B-009 | DELETE | `http://localhost:3002/api/crm/contacts/{id}` | `webpack_registry_unnavigated` |
-| EP-B-010 | GET | `http://localhost:3002/api/finance/invoices` | `module_federation_remote_entry` |
-| EP-B-011 | POST | `http://localhost:3002/api/finance/invoices` | `fetch_interception` |
-| EP-B-012 | GET | `http://localhost:3002/api/hr/employees` | `webpack_registry_unnavigated` |
-| EP-B-013 | PUT | `http://localhost:3002/api/hr/employees/{id}` | `fetch_interception` |
-| EP-B-014 | GET | `http://localhost:3002/api/analytics/dashboard` | `module_federation_remote_entry` |
-| EP-B-015 | GET | `http://localhost:3002/api/orders/list` | `webpack_registry_unnavigated` |
-| EP-B-016 | POST | `http://localhost:3002/api/orders/create` | `fetch_interception` |
-| EP-B-017 | GET | `http://localhost:3002/api/reports/generate` | `module_federation_remote_entry` |
-| EP-B-018 | GET | `http://localhost:3002/api/users/profile` | `webpack_registry_unnavigated` |
-| EP-B-019 | PUT | `http://localhost:3002/api/users/profile` | `fetch_interception` |
-| EP-B-020 | GET | `http://localhost:3002/api/admin/settings` | `spring_actuator_mappings` |
-| EP-B-021 | GET | `http://localhost:3002/ws/background-sync` | `webworker_script_src` |
-
-**App C — react-ecommerce (React 18 / Vite, 28 endpoints)**
-
-| ID | Method | URL | Technique |
-|----|--------|-----|-----------|
-| EP-C-001 | GET | `http://localhost:3003/api/v2/products/{id}` | `jsx_source_recovery` |
-| EP-C-002 | GET | `http://localhost:3003/api/v2/products/list` | `fetch_interception` |
-| EP-C-003 | POST | `http://localhost:3003/checkout/process` | `axios_wrapper` |
-| EP-C-004 | GET | `http://localhost:3003/api/v2/products/list` | `indexeddb_api_cache` |
-| EP-C-005 | POST | `http://localhost:3003/api/v2/products` | `jsx_source_recovery` |
-| EP-C-006 | PUT | `http://localhost:3003/api/v2/products/{id}` | `axios_wrapper` |
-| EP-C-007 | DELETE | `http://localhost:3003/api/v2/products/{id}` | `fetch_interception` |
-| EP-C-008 | GET | `http://localhost:3003/api/v2/cart` | `jsx_source_recovery` |
-| EP-C-009 | POST | `http://localhost:3003/api/v2/cart/add` | `axios_wrapper` |
-| EP-C-010 | DELETE | `http://localhost:3003/api/v2/cart/{itemId}` | `fetch_interception` |
-| EP-C-011 | GET | `http://localhost:3003/api/v2/orders` | `jsx_source_recovery` |
-| EP-C-012 | POST | `http://localhost:3003/api/v2/orders` | `axios_wrapper` |
-| EP-C-013 | GET | `http://localhost:3003/api/v2/orders/{id}` | `indexeddb_api_cache` |
-| EP-C-014 | PATCH | `http://localhost:3003/api/v2/orders/{id}/status` | `fetch_interception` |
-| EP-C-015 | GET | `http://localhost:3003/api/v2/users/profile` | `jsx_source_recovery` |
-| EP-C-016 | PUT | `http://localhost:3003/api/v2/users/profile` | `axios_wrapper` |
-| EP-C-017 | POST | `http://localhost:3003/api/v2/auth/login` | `fetch_interception` |
-| EP-C-018 | POST | `http://localhost:3003/api/v2/auth/logout` | `axios_wrapper` |
-| EP-C-019 | GET | `http://localhost:3003/api/v2/recommendations` | `webworker_script_src` |
-| EP-C-020 | POST | `http://localhost:3003/api/v2/recommendations/feedback` | `webworker_script_src` |
-| EP-C-021 | GET | `http://localhost:3003/api/v2/search` | `jsx_source_recovery` |
-| EP-C-022 | GET | `http://localhost:3003/api/v2/categories` | `fetch_interception` |
-| EP-C-023 | GET | `http://localhost:3003/api/v2/reviews/{productId}` | `indexeddb_api_cache` |
-| EP-C-024 | POST | `http://localhost:3003/api/v2/reviews` | `axios_wrapper` |
-| EP-C-025 | GET | `http://localhost:3003/api/v2/wishlist` | `jsx_source_recovery` |
-| EP-C-026 | POST | `http://localhost:3003/api/v2/wishlist/add` | `fetch_interception` |
-| EP-C-027 | DELETE | `http://localhost:3003/api/v2/wishlist/{id}` | `axios_wrapper` |
-| EP-C-028 | POST | `http://localhost:3003/checkout/validate-coupon` | `jsx_source_recovery` |
-
-**App D — vue-portal (Vue 3 / Nuxt — no source maps, 25 endpoints)**
-
-| ID | Method | URL | Technique |
-|----|--------|-----|-----------|
-| EP-D-001 | GET | `http://localhost:3004/api/users/{id}` | `vue_composition_axios` |
-| EP-D-002 | POST | `http://localhost:3004/api/legacy/bridge/getEmployeeRecord` | `soap_bridge_dynamic` |
-| EP-D-003 | POST | `http://localhost:3004/api/legacy/bridge/updatePayroll` | `soap_bridge_dynamic` |
-| EP-D-004 | POST | `http://localhost:3004/api/legacy/bridge/generateReport` | `soap_bridge_dynamic` |
-| EP-D-005 | GET | `http://localhost:3004/api/users/list` | `vue_composition_axios` |
-| EP-D-006 | PUT | `http://localhost:3004/api/users/{id}` | `vue_composition_axios` |
-| EP-D-007 | DELETE | `http://localhost:3004/api/users/{id}` | `vue_composition_axios` |
-| EP-D-008 | GET | `http://localhost:3004/api/portal/announcements` | `vue_composition_axios` |
-| EP-D-009 | POST | `http://localhost:3004/api/portal/announcements` | `vue_composition_axios` |
-| EP-D-010 | GET | `http://localhost:3004/api/portal/documents` | `vue_composition_axios` |
-| EP-D-011 | POST | `http://localhost:3004/api/portal/documents/upload` | `vue_composition_axios` |
-| EP-D-012 | DELETE | `http://localhost:3004/api/portal/documents/{id}` | `vue_composition_axios` |
-| EP-D-013 | POST | `http://localhost:3004/api/legacy/bridge/getPayslip` | `soap_bridge_dynamic` |
-| EP-D-014 | POST | `http://localhost:3004/api/legacy/bridge/submitLeaveRequest` | `soap_bridge_dynamic` |
-| EP-D-015 | GET | `http://localhost:3004/wsdl/legacy-service.wsdl` | `wsdl_introspection` |
-| EP-D-016 | GET | `http://localhost:3004/api/services/directory` | `vue_composition_axios` |
-| EP-D-017 | GET | `http://localhost:3004/api/services/{id}` | `vue_composition_axios` |
-| EP-D-018 | POST | `http://localhost:3004/api/auth/login` | `vue_composition_axios` |
-| EP-D-019 | GET | `http://localhost:3004/api/dashboard/stats` | `vue_composition_axios` |
-| EP-D-020 | GET | `http://localhost:3004/api/notifications` | `vue_composition_axios` |
-| EP-D-021 | PATCH | `http://localhost:3004/api/notifications/{id}/read` | `vue_composition_axios` |
-| EP-D-022 | GET | `http://localhost:3004/api/profile` | `vue_composition_axios` |
-| EP-D-023 | PUT | `http://localhost:3004/api/profile` | `vue_composition_axios` |
-| EP-D-024 | POST | `http://localhost:3004/api/legacy/bridge/getDepartmentBudget` | `soap_bridge_dynamic` |
-| EP-D-025 | DELETE | `http://localhost:3004/api/portal/announcements/{id}` | `vue_composition_axios` |
-
-**App E — nextjs-saas (Next.js / React 19, 28 endpoints)**
-
-| ID | Method | Resolver / URL | Technique |
-|----|--------|----------------|-----------|
-| EP-E-001 | GRAPHQL | `http://localhost:3005/api/graphql` | `graphql_endpoint_heuristic` |
-| EP-E-GQL-001 | GRAPHQL | `Query.getUser` | `graphql_query_resolver` |
-| EP-E-GQL-002 | GRAPHQL | `Query.listOrders` | `graphql_query_resolver` |
-| EP-E-GQL-003 | GRAPHQL | `Query.getProduct` | `graphql_query_resolver` |
-| EP-E-GQL-004 | GRAPHQL | `Query.searchProducts` | `graphql_query_resolver` |
-| EP-E-GQL-005 | GRAPHQL | `Query.getDashboardMetrics` | `graphql_query_resolver` |
-| EP-E-GQL-006 | GRAPHQL | `Query.getAuditLog` | `graphql_query_resolver` |
-| EP-E-GQL-007 | GRAPHQL | `Query.listTeamMembers` | `graphql_query_resolver` |
-| EP-E-GQL-008 | GRAPHQL | `Query.getBillingInfo` | `graphql_query_resolver` |
-| EP-E-GQL-009 | GRAPHQL | `Mutation.createUser` | `graphql_mutation_resolver` |
-| EP-E-GQL-010 | GRAPHQL | `Mutation.updateOrder` | `graphql_mutation_resolver` |
-| EP-E-GQL-011 | GRAPHQL | `Mutation.deleteProduct` | `graphql_mutation_resolver` |
-| EP-E-018 | WS | `wss://localhost:3005/ws/notifications` | `websocket_connection_url` |
-| EP-E-019 | WS | `wss://localhost:3005/ws/live-dashboard` | `websocket_static` |
-| EP-E-020 | GET | `http://localhost:3005/api/dashboard/metrics` | `react_useeffect_fetch` |
-| EP-E-021 | GET | `http://localhost:3005/api/auth/session` | `react_useeffect_fetch` |
-| EP-E-022 | POST | `http://localhost:3005/api/auth/login` | `react_useeffect_fetch` |
-| EP-E-023 | POST | `http://localhost:3005/api/auth/logout` | `react_useeffect_fetch` |
-| EP-E-024 | GET | `http://localhost:3005/api/users` | `react_useeffect_fetch` |
-| EP-E-025 | GET | `http://localhost:3005/api/users/{id}` | `react_useeffect_fetch` |
-| EP-E-026 | GET | `http://localhost:3005/api/billing/plans` | `react_useeffect_fetch` |
-| EP-E-027 | POST | `http://localhost:3005/api/billing/subscribe` | `react_useeffect_fetch` |
-| EP-E-028 | GET | `http://localhost:3005/api/team/members` | `react_useeffect_fetch` |
-| EP-E-029 | POST | `http://localhost:3005/api/team/invite` | `react_useeffect_fetch` |
-| EP-E-030 | GET | `http://localhost:3005/api/settings` | `react_useeffect_fetch` |
-| EP-E-031 | PUT | `http://localhost:3005/api/settings` | `react_useeffect_fetch` |
-| EP-E-032 | GET | `http://localhost:3005/api/totp/setup` | `ts_service_file_recovery` |
-| EP-E-033 | POST | `http://localhost:3005/api/totp/verify` | `ts_service_file_recovery` |
+The audit fails if any ground-truth endpoint is not answered through its app's origin, a served file carries
+test labels, benchmark prose, the static token or the bench password, a served JS file or map is not reachable from
+an `index.html`, a reference points at a file that is not served, a map is invalid or out of sync, or the
+Dockerfiles, compose file and nginx configs disagree with the serving map.
 
 ---
 
-## Backend API Servers
+## Changes from v2.0
 
-| Server | Port | Protocol | Purpose |
-|--------|------|----------|---------|
-| rest-backend | 4001 | REST/HTTP | Serves REST endpoints for Apps A–E; OpenAPI spec at `/openapi.json` |
-| graphql-backend | 4002 | GraphQL | Full schema with introspection enabled |
-| websocket-backend | 4003 | WebSocket | Real-time endpoint for App E |
-| soap-bridge | 4004 | SOAP/WSDL | Legacy service bridge for App D; WSDL at `/wsdl/legacy-service.wsdl` |
+- **Ground truth = the client's full API surface** (168 endpoints) instead of 108 hand-picked entries; the 108
+  original cases (112 after the GraphQL rework) are kept as tagged test cases. v2.0 charged tools for correctly
+  finding the ~56 endpoints that the clients call but the manifest omitted.
+- **Discovery classes are derived from the artifacts.** In v2.0, 46 of the 47 "source-map only" entries were plainly
+  in the bundle, no recorded bundle location was correct, and 51 source-file paths did not exist.
+- **Everything in the ground truth is served.** In v2.0, 84 of 114 entries were answered by nothing (no proxies,
+  missing routes); every app returned its HTML shell with 200 for any path, so the reachability checks could not
+  fail.
+- **No answer key and no auth bypass in served files.** Test-case labels, benchmark commentary, a pre-planted bearer
+  token and hard-coded credentials were removed from HTML, bundles, source maps, GraphQL descriptions, the OpenAPI
+  document and the WSDL. Logins are real.
+- **Assets are reachable the way real builds reference them** (build manifest, runtime chunk map, `new Worker`,
+  federation remotes) instead of only through file-name guessing.
+- **Scoring rewritten** (unit, hosts, assets, strict/lenient, route oracle), plus `sanity_check.py`, the runners,
+  and an offline audit.
 
----
-
-## evaluate.py — Scoring
-
-`evaluate.py` scores your tool's output against the manifest. It normalizes URLs (trailing slashes, scheme casing, query parameter ordering, numeric path segments as wildcards) and supports native output formats from major tools via `--format`.
-
-**Note on GraphQL scoring:** GraphQL operations all share the `/api/graphql` URL. The evaluator matches by `operation_name` field, not URL alone. Tools must emit operation names in their output to score individual resolvers.
-
-### Supported Input Formats
-
-| Tool | `--format` value | Input format |
-|------|-----------------|--------------|
-| SPABench native | `spabench-v1` | JSON `{ "endpoints": [...] }` |
-| LinkFinder | `linkfinder` | One URL/path per line |
-| xnLinkFinder | `xnlinkfinder` | JSON array or `{ "results": [...] }` |
-| JSLuice | `jsluice` | JSON array of `{ "kind": "URL", "value": "..." }` |
-| Katana | `katana` | JSONL, one `{ "request": { "endpoint": "..." } }` per line |
-
-### Key Options
-
-```
---manifest          Path to manifest.json (required)
---tool-output       Path to your tool's output file (required)
---format            Input format adapter (default: spabench-v1)
---app               Filter to a single app (e.g. angular-permit)
---breakdown-by      Per-technique or per-phase stats (technique | phase)
---show-missed       List ground-truth endpoints the tool missed
---compare           Compare two tool outputs side-by-side
---report            Write an HTML comparison report to a file
---threshold         Minimum confidence score to include
-```
-
-### SPABench Native Output Format
-
-```json
-{
-  "tool": "YourToolName",
-  "version": "1.0.0",
-  "target": "http://localhost:3001",
-  "endpoints": [
-    {
-      "url": "http://localhost:4001/api/rc_permit/getPermitType",
-      "method": "GET",
-      "confidence": 91,
-      "source": "static_analysis"
-    }
-  ]
-}
-```
-
-Only `url` is required per endpoint; `method`, `confidence`, and `source` are optional.
+Full list: [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## Technique Tags
+## Limitations
 
-All technique tags follow the controlled vocabulary in [`docs/TECHNIQUE_REFERENCE.md`](docs/TECHNIQUE_REFERENCE.md), organized by discovery phase:
-
-- **Phase 1** — Federation & JS bundle discovery (script tags, preloads, Module Federation, WebWorkers)
-- **Phase 1.5** — Source map intelligence (service file recovery, `environment.ts`, JSX maps, auth services)
-- **Phase 2** — Static AST & variable resolution (URL construction patterns, inter-procedural chains, HTTP client patterns, parameter mining)
-- **Phase 3** — Dynamic browser instrumentation (XHR/fetch interception, Webpack registry, WebSocket, IndexedDB)
-- **Phase 4** — Protocol expansion (GraphQL introspection, Spring Actuator, WSDL/SOAP, OpenAPI probing)
-
-Each manifest entry gets exactly one technique tag — the minimum capability needed to find that endpoint.
-
----
-
-## Baseline Results (v2.0)
-
-Results on SPABench v2.0 (108 ground-truth endpoints, reachability-verified):
-
-| Tool | Precision | Recall | F1 | Notes |
-|------|-----------|--------|-----|-------|
-| **Shadow Endpoints** | **74.6%** | **92.3%** | **81.2%** | Only tool covering all technique classes (98/108) |
-| Katana | 90.5% | 53.9% | 63.3% | Authenticated crawl + JS parse; misses non-literal, GraphQL, SOAP |
-| JSLuice | 64.1% | 55.2% | 59.3% | Complete string-literal URLs only |
-| xnLinkFinder | 54.8% | 57.7% | 46.0% | Fragment paths; no inter-procedural resolution |
-| LinkFinder | 46.6% | 52.2% | 49.2% | High vendor-library noise on literal-bearing bundles |
-
-**Shadow Endpoints per-app:**
-
-| App | GT | Found | Recall | Precision | F1 |
-|-----|-----|-------|--------|-----------|-----|
-| A (angular-permit) | 22 | 22 | 100% | 58.2% | — |
-| B (angular-erp) | 20 | 18 | 90.0% | 80.0% | — |
-| C (react-ecommerce) | 20 | 20 | 100% | 69.6% | — |
-| D (vue-portal) | 18 | 18 | 100% | 76.0% | — |
-| E (nextjs-saas) | 28 | 20 | 71.4% | 89.3% | — |
-| **Total** | **108** | **98** | **92.3% macro** | **74.6% macro** | **81.2%** |
-
-Precision is reported after reachability verification (`--verify-reachable`) and cross-app filtering. A finding that resolves to another app's manifest host counts as a cross-app discovery, not a false positive. Any non-manifest endpoint returning a non-404 status is treated as a real but unlisted discovery. 49 genuine false positives remain across 456 total findings.
+- **Hand-built bundles.** The apps' `dist/` folders are hand-written to emulate the named frameworks' build
+  output; they were not produced by Angular CLI, Vite, Nuxt or the Next.js compiler.
+- **Content-only source maps.** Maps carry the original sources (`sourcesContent`) but a single placeholder
+  mapping; tools that rely on position mappings get no position information.
+- **One shared backend.** All apps use the same REST server, so some paths are shared between apps.
+- **Small and synthetic.** 5 apps, 168 endpoints; Angular is represented twice. Results characterise techniques,
+  not production prevalence.
+- **Single annotator.** The client surface was enumerated by one person reading the served code; inter-annotator
+  agreement has not been measured.
 
 ---
 
-## Running Against a Single App
+## Adding test cases
 
-```bash
-# App A only
-python evaluate.py \
-  --manifest manifest.json \
-  --tool-output results.json \
-  --app angular-permit \
-  --breakdown-by technique \
-  --show-missed
-
-# Compare two tools on App E (GraphQL focus)
-python evaluate.py \
-  --manifest manifest.json \
-  --compare tool-a.json tool-b.json \
-  --app nextjs-saas \
-  --report comparison.html
-```
-
----
-
-## Verifying the Environment
-
-```bash
-python sanity_check.py --manifest manifest.json
-# Verbose, single app:
-python sanity_check.py --manifest manifest.json --app angular-permit --verbose
-```
-
-Exit 0 = all reachable. Exit 1 = something is down — check `docker compose ps`.
-
----
-
-## Known Limitations
-
-**SPABench is small by design.** 108 endpoints across 5 apps covers all technique classes in the paper. It is not a random sample of production SPAs, and recall here does not predict recall in the wild.
-
-**GraphQL concentration.** 12 of 108 endpoints (11%) are GraphQL operations on nextjs-saas. A tool with broken introspection misses all of them. The test is effectively binary — introspection returns the schema or it doesn't.
-
-**Angular overrepresentation.** Apps A and B are both Angular. React (App C), Vue (App D), and Next.js (App E) balance this, but the benchmark does not weight frameworks proportionally to their production prevalence.
-
-**No adversarial cases.** Obfuscation is limited to standard minification and variable renaming. No CSP blocks, no anti-debug, no stripped source maps on apps that serve them. Adversarial variants are planned.
-
-**Verb-variant gap.** The scanner frequently finds GET but misses other methods on the same path. This is a known open problem — see issue tracker.
-
----
-
-## Adding New Test Cases
-
-See [`docs/ADDING_TEST_CASES.md`](docs/ADDING_TEST_CASES.md). Short version:
-
-1. Add the endpoint to `apps/<app>/manifest-partial.json`
-2. Implement it in the corresponding backend server
-3. Add the technique tag to `docs/TECHNIQUE_REFERENCE.md` if new
-4. `python build_manifest.py` to regenerate `manifest.json`
-5. `python validate_manifest.py` to check schema
-6. `python sanity_check.py` to confirm reachability
-
-Constraint: every new entry must test a technique not already covered, and must be exclusively discoverable via that technique.
+See [docs/ADDING_TEST_CASES.md](docs/ADDING_TEST_CASES.md): change the client in `apps/<app>/`, add the route to the
+backend, add the row to `apps/<app>/manifest-partial.json`, then run `scripts/sync_sourcemaps.py`,
+`build_manifest.py`, `make_docs.py` and `audit/bench_audit.py all`.
 
 ---
 
@@ -471,8 +250,6 @@ Constraint: every new entry must test a technique not already covered, and must 
 }
 ```
 
----
-
 ## License
 
-SPABench benchmark applications, API servers, manifest, and evaluation scripts are released under the MIT License. See `LICENSE` for details.
+The README of v2.0 declared the MIT License; a `LICENSE` file still has to be added.

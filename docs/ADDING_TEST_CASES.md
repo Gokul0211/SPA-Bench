@@ -1,259 +1,89 @@
-# Adding Test Cases to SPABench
-
-Step-by-step guide for contributors adding new endpoints, techniques, or applications.
-
----
-
-## Adding a Single Endpoint
-
-### 1. Add to the application source
-
-Add the endpoint pattern to the relevant app's source file. For example, to add a new
-Vue Composition API endpoint to App D:
-
-```typescript
-// apps/vue-portal/src/composables/useReport.ts
-export function useReport(reportId: string) {
-  return useAsyncData(`report-${reportId}`, async () => {
-    const response = await axios.get(`${API_BASE}/api/reports/${reportId}`, {
-      headers: { Authorization: `Bearer ${useCookie('bench_session').value}` },
-    });
-    return response.data;
-  });
-}
-```
-
-### 2. Add to the minified dist file
-
-The endpoint must also appear in the compiled output (`dist/`) at the correct location
-so tools can discover it. Update the relevant `dist/**/*.js` file to include the URL
-at a known column position, and update (or add) the corresponding `.js.map` to embed
-the TypeScript source.
-
-### 3. Add to `manifest-partial.json`
-
-Add an entry to `apps/<app-name>/manifest-partial.json`:
-
-```json
-{
-  "id": "EP-D-005",
-  "method": "GET",
-  "url": "http://localhost:3004/api/reports/{id}",
-  "phase": "2",
-  "technique": "vue_composition_axios",
-  "exclusive": false,
-  "auth_method": "form",
-  "auth_required": true,
-  "security_finding_type": "none",
-  "source_file": "src/composables/useReport.ts",
-  "minified_location": "_nuxt/entry.js:1:XXXXX",
-  "parameters": [
-    { "name": "id", "location": "path", "type": "string", "required": true }
-  ],
-  "discovery_notes": "Vue 3 Composition API useAsyncData + axios.get pattern. URL uses template literal with path parameter."
-}
-```
-
-### 4. Rebuild the manifest
-
-```bash
-python build_manifest.py
-```
-
-### 5. Validate
-
-```bash
-python validate_manifest.py --manifest manifest.json --verbose
-```
-
-### 6. Verify reachability
-
-```bash
-docker compose up -d
-python sanity_check.py --manifest manifest.json --app vue-portal
-```
-
-### 7. Submit a pull request
-
-Include all three changed files: the source file, the dist file, and `manifest-partial.json`.
-
----
-
-## Mandatory Fields
-
-Every endpoint entry in `manifest-partial.json` must include:
-
-| Field | Required | Notes |
-|---|---|---|
-| `id` | Yes | Format: `EP-{APP}-{N}`. Never reused after retirement. |
-| `method` | Yes | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `WS`, `GRAPHQL` |
-| `url` | Yes | Full URL. Path params as `{paramName}`. |
-| `phase` | Yes | `"1"`, `"1.5"`, `"2"`, `"3"`, or `"4"` |
-| `technique` | Yes | Must be in controlled vocabulary (`docs/TECHNIQUE_REFERENCE.md`) |
-| `exclusive` | Yes | `true` if only discoverable via the specified technique |
-| `auth_method` | Yes | `"none"`, `"bearer"`, `"form"`, or `"totp"` |
-| `auth_required` | Yes | `true` if endpoint returns 401 without auth |
-| `security_finding_type` | Yes | Use `"none"` if not security-relevant |
-| `parameters` | Yes | Empty array `[]` if no parameters |
-| `discovery_notes` | Yes | Must be non-empty. Explains why the technique is required. |
-
----
-
-## Exclusive vs Non-Exclusive
-
-Set `exclusive: true` when the endpoint is **only** discoverable via the specified technique
-and cannot be found any other way:
-
-```
-exclusive: true  examples:
-  - SOAP bridge URL (runtime-computed from WSDL — no static string)
-  - GraphQL mutation resolver (only via introspection)
-  - Webpack unnavigated module (only via __webpack_modules__ harvest)
-  - Spring Actuator endpoint (only by probing /actuator/mappings)
-
-exclusive: false examples:
-  - Login endpoint (interceptable at network layer AND in source map)
-  - Product list endpoint (found via useEffect AND via fetch interception)
-  - WebSocket static URL (in source map AND as string literal AND interceptable)
-```
-
-When `exclusive: false`, list additional discovery methods in `redundant_techniques`:
-
-```json
-"exclusive": false,
-"redundant_techniques": ["fetch_interception", "ts_service_file_recovery"]
-```
-
----
-
-## Adding a New Technique Tag
-
-If your endpoint requires a discovery technique not already in the vocabulary:
-
-1. **Add to `docs/TECHNIQUE_REFERENCE.md`** — include tag name, phase, description, and an example.
-
-2. **Add to the enum in `manifest.schema.json`** — add the tag string to the `technique` enum list.
-
-3. **Add to `validate_manifest.py`** — add to both `VALID_TECHNIQUES` and `PHASE_TECHNIQUE_MAP`:
-
-```python
-VALID_TECHNIQUES = {
-    # ... existing tags ...
-    'your_new_technique',        # <- add here
-}
-
-PHASE_TECHNIQUE_MAP = {
-    '2': {'url_concat_direct', 'url_template_literal', ..., 'your_new_technique'},
-}
-```
-
-4. Submit all three files in the same PR. The validator enforces that every `technique` tag
-in the manifest appears in the controlled vocabulary — a manifest referencing an unknown
-tag will fail validation.
-
----
-
-## Adding a New Noise Pattern
-
-To add a new vendor library as a noise source:
-
-1. Add the library's characteristic path patterns to `noise/manifest-noise.json`:
-
-```json
-{
-  "id": "TC-NOISE-009",
-  "tag": "noise_lodash",
-  "detection_method": "path_indicator",
-  "indicators": ["node_modules/lodash", "node_modules/lodash-es"],
-  "example_fps": [
-    "node_modules/lodash/chunk.js",
-    "node_modules/lodash-es/lodash.js"
-  ]
-}
-```
-
-2. Add representative noise strings to `noise/vendor.js` so they appear in the
-simulated vendor bundle.
-
----
-
-## Adding a New Benchmark Application
-
-Adding a full application requires several steps. Before starting, verify that the new app
-tests at least one technique not already covered, or tests an existing technique in a
-meaningfully different framework context.
-
-### Required files
-
-```
-apps/<new-app>/
-  src/              # TypeScript/JSX source files
-  dist/             # Pre-built output (index.html, *.js, *.js.map)
-  manifest-partial.json
-  Dockerfile
-```
-
-### Dockerfile conventions
-
-All app containers:
-- Use `nginx:1.25-alpine` as base
-- Serve on a unique port (add to `docker-compose.yml`)
-- Expose `GET /health` returning `{"status":"ok","app":"<id>","port":<port>}`
-- Include `HEALTHCHECK` directive
-
-### docker-compose.yml
-
-Add a service entry following the existing pattern:
-
-```yaml
-your-new-app:
-  build:
-    context: ./apps/your-new-app
-    dockerfile: Dockerfile
-  container_name: spabench-your-new-app
-  networks: [spabench]
-  ports:
-    - "30XX:30XX"
-  environment:
-    <<: *common-env
-    PORT: 30XX
-    API_BASE_URL: http://rest-backend:4001
-  depends_on:
-    rest-backend:
-      condition: service_healthy
-```
-
----
-
-## Versioning Policy
-
-- **Major version bump**: Incompatible manifest schema change (new required field, removed field)
-- **Minor version bump**: New endpoint, application, or technique tag added
-- **Patch version bump**: Bug fix, endpoint URL correction, documentation update
-
-Endpoint IDs are **permanently stable** — once assigned, an ID is never changed and never
-reused after the endpoint is retired. Retired endpoints are marked `"retired": true`
-but remain in the manifest for historical scoring continuity.
-
----
-
-## Validation Checklist
-
-Before submitting a PR, run:
-
-```bash
-# 1. Schema + semantic validation
-python validate_manifest.py --manifest manifest.json --verbose
-
-# 2. Rebuild manifest from partials
-python build_manifest.py
-
-# 3. Reachability check
-docker compose up -d
-python sanity_check.py --manifest manifest.json
-
-# 4. Regression check — existing tool baselines should not degrade
-python evaluate.py --manifest manifest.json --tool-output baselines/katana.json --breakdown-by technique
-```
-
-All four checks must pass before merging.
+# Adding test cases to SPABench
+
+The ground truth is built from the apps, not typed next to them. Adding an endpoint means changing an app so that
+its client really calls the endpoint and its server really answers it; the manifest then follows.
+
+## Rules
+
+1. **Nothing served may describe the benchmark.** No `TC-…`/`EP-…` ids, no "this tests …" comments, no
+   tool names, no ground-truth hints — not in HTML, bundles, source-map sources, API responses, GraphQL
+   descriptions, OpenAPI text or WSDL documentation. Put design notes in the partial's `notes` field instead.
+   `audit/bench_audit.py leaks` enforces this.
+2. **No auth shortcuts.** Clients get tokens only from the login flow; never plant tokens, roles or passwords in
+   pages or bundles.
+3. **Everything is reachable.** A new chunk, worker or map must be referenced the way a real build would
+   (script tag, `import()`, `new Worker`, build manifest, runtime chunk map, federation remote,
+   `sourceMappingURL`). `audit/bench_audit.py reachability` enforces this.
+4. **Every ground-truth endpoint is served** by a real route (no catch-alls). `audit/bench_audit.py served`
+   enforces this.
+5. **Do not hand-write derived fields** (class, evidence, locations, exclusivity, counts). The build computes them.
+
+## Adding an endpoint to an existing app
+
+1. **Client.** Add the call to the app's source in `apps/<app>/src/…` (or the remote's source) *and* to the served
+   output in `apps/<app>/dist/…` (`.next/` for nextjs-saas). The served output is hand-built (see README,
+   Limitations): write it the way the emulated toolchain would emit it, without comments.
+2. **Source maps.** `python scripts/sync_sourcemaps.py` copies the changed sources into every served map that lists
+   them. If you added a new source file to a bundle, add it to that map's `sources` first.
+3. **Server.** Add the route to the matching file in `api-servers/rest-backend/routes/` (or the GraphQL schema and
+   resolvers, the WebSocket server's `ENDPOINT_CHANNELS`, the WSDL). Use `requireAuth` / `requireRole('admin')`
+   for protected routes, and return a 2xx for any well-formed request (synthesise records for unknown ids). If
+   the app reaches it same-origin, make sure the app's `nginx/*.conf` forwards the path.
+4. **Ground truth.** Add a row to `apps/<app>/manifest-partial.json`:
+
+   ```json
+   {
+     "id": "EP-D-019",
+     "method": "GET",
+     "url": "http://localhost:3004/api/reports/{reportId}",
+     "kind": "rest",
+     "test_case": true,
+     "reachability": "served",
+     "auth_required": true,
+     "design_technique": "vue_composition_axios",
+     "parameters": [{"name": "reportId", "location": "path", "type": "string", "required": true}],
+     "security_finding_type": "none",
+     "notes": "Optional: why the case is interesting."
+   }
+   ```
+
+   * `reachability`: `served` (answered by the benchmark), `external` (a non-routable host such as a staging
+     server or private IP, which must be listed in the app's `external_hosts`), or `probe` (served but referenced
+     by no client code, like `/actuator/mappings`).
+   * If no single string literal contains the path (it is assembled from a base URL and a name, a string array,
+     template pieces, …), add `"evidence_hint": {"composed": ["bundle"]}` (and/or `"sourcemap"`); for paths whose
+     last piece comes from runtime data, `"evidence_hint": {"runtime": true}`. The build checks every segment is
+     present in the artifact you name.
+   * `security_finding_type` is one of `staging_server_url`, `oauth_token_endpoint`, `auth_endpoint`,
+     `internal_ip_address`, `admin_crud_endpoint`, `management_endpoint_exposure`, `legacy_attack_surface`,
+     `graphql_resolver_exposure`, `websocket_realtime_surface`, `none`.
+   * New design techniques go into `docs/TECHNIQUE_REFERENCE.md` **and** the `design_technique` enum in
+     `manifest.schema.json`.
+   * GraphQL operations: `"kind": "graphql"`, `"method": "GRAPHQL"`, URL `…/graphql#operationName` and
+     `"graphql": {"operation_type": "query", "operation": "operationName"}`.
+5. **Rebuild and check:**
+
+   ```bash
+   python build_manifest.py
+   python make_docs.py
+   python validate_manifest.py
+   python audit/bench_audit.py all
+   python -m unittest discover -s tests
+   docker compose up -d --build && python sanity_check.py
+   ```
+
+## Adding a static asset (chunk, remote, worker)
+
+List it under `assets` in the partial (`{"id": "AS-D-002", "url": "...", "design_technique": "..."}`). Assets are
+scored separately from endpoints. Make sure it is referenced (rule 3).
+
+## Adding an application
+
+1. `apps/<new-app>/` with `dist/` (served files), `src/`, `nginx/default.conf` (listen 80; forward API paths with
+   `proxy_pass $var` and `resolver 127.0.0.11`; static assets `try_files $uri =404`; SPA fallback only on `/`),
+   a `Dockerfile` that copies both, and `manifest-partial.json` with an `app` block.
+2. Add the service to `docker-compose.yml` (`"<port>:80"`).
+3. Register the origin in `spabench/artifacts.py` (`SERVED`) and the nginx conf in `spabench/oracle.py`
+   (`NGINX_CONF`); add the app id to `APPS` in `build_manifest.py` and the runners.
+4. Run the checks above; `audit/bench_audit.py consistency` verifies compose, Dockerfile and nginx agree with
+   `SERVED`.

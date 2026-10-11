@@ -1,37 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  SPABench Legacy HR Service — WSDL 1.1
-  Served at: GET http://soap-bridge:4004/wsdl/legacy-service.wsdl
-
-  BENCHMARK DESIGN NOTE — Why this WSDL exists:
-  ──────────────────────────────────────────────
-  The three SOAP bridge endpoints (EP-D-002, EP-D-003, EP-D-004) are classified as:
-    exclusive: true
-    technique: soap_bridge_dynamic
-    phase: 3
-    source_file: null
-    minified_location: null
-
-  This means their URLs cannot appear anywhere in the Vue portal's static bundle.
-  Instead, the vue-portal server-side code fetches this WSDL at request time,
-  parses the <operation name="..."> elements, and constructs the bridge paths as:
-
-    /api/legacy/bridge/{operationName}
-
-  The bridge URL is assembled at runtime — it is never written as a string literal
-  in the frontend source, so static analysis tools cannot find it. The only way to
-  discover these endpoints is to:
-    1. Observe the WSDL fetch in Phase 3 dynamic browsing (XHR/Fetch interception), OR
-    2. Observe the subsequent POST to /api/legacy/bridge/* in live traffic
-
-  This is TC-P4-014 (soap_bridge_dynamic): "URL construction is runtime-computed
-  from a WSDL lookup — static analysis cannot construct these URLs."
-
-  The three operations defined below correspond exactly to:
-    getEmployeeRecord  → EP-D-002  POST /api/legacy/bridge/getEmployeeRecord
-    updatePayroll      → EP-D-003  POST /api/legacy/bridge/updatePayroll
-    generateReport     → EP-D-004  POST /api/legacy/bridge/generateReport
--->
+<!-- Legacy HR service, exposed over HTTP by a REST bridge (one POST per operation). -->
 <definitions
   name="LegacyHRService"
   targetNamespace="urn:spabench:legacy:hr"
@@ -155,21 +123,11 @@
   </message>
 
   <!-- ── Port type ─────────────────────────────────────────────────────────── -->
-  <!--
-    The portType lists the three operations whose names the vue-portal parses
-    at runtime to construct the bridge paths:
-      getEmployeeRecord → /api/legacy/bridge/getEmployeeRecord
-      updatePayroll     → /api/legacy/bridge/updatePayroll
-      generateReport    → /api/legacy/bridge/generateReport
-  -->
   <portType name="LegacyHRPortType">
 
     <operation name="getEmployeeRecord">
       <documentation>
         Retrieve full employee record by ID.
-        Bridge path: /api/legacy/bridge/getEmployeeRecord (EP-D-002)
-        Auth: form (JWT or session cookie)
-        Security finding: legacy_attack_surface
       </documentation>
       <input  message="tns:GetEmployeeRecordInput"/>
       <output message="tns:GetEmployeeRecordOutput"/>
@@ -179,9 +137,6 @@
     <operation name="updatePayroll">
       <documentation>
         Update employee salary in the legacy payroll system.
-        Bridge path: /api/legacy/bridge/updatePayroll (EP-D-003)
-        Auth: form (JWT or session cookie)
-        Security finding: legacy_attack_surface
       </documentation>
       <input  message="tns:UpdatePayrollInput"/>
       <output message="tns:UpdatePayrollOutput"/>
@@ -191,9 +146,6 @@
     <operation name="generateReport">
       <documentation>
         Generate a payroll or compliance report over a date range.
-        Bridge path: /api/legacy/bridge/generateReport (EP-D-004)
-        Auth: form (JWT or session cookie)
-        Security finding: legacy_attack_surface
       </documentation>
       <input  message="tns:GenerateReportInput"/>
       <output message="tns:GenerateReportOutput"/>
@@ -230,20 +182,12 @@
   </binding>
 
   <!-- ── Service ───────────────────────────────────────────────────────────── -->
-  <!--
-    The service location points to the SOAP bridge REST adapter.
-    The vue-portal reads this location at runtime and derives the base path
-    for all bridge endpoints.
-  -->
   <service name="LegacyHRService">
     <documentation>
       Legacy HR SOAP service bridged as REST POST endpoints.
-      All three operations are exclusively discoverable via dynamic interception
-      because the bridge URL is constructed at runtime from this WSDL.
-      Static analysis of the Vue portal bundle cannot recover these URLs.
     </documentation>
     <port name="LegacyHRPort" binding="tns:LegacyHRBinding">
-      <soap:address location="http://localhost:4004/api/legacy/bridge"/>
+      <soap:address location="http://localhost:3004/api/legacy/bridge"/>
     </port>
   </service>
 

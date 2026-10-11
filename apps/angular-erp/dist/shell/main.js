@@ -1,48 +1,9 @@
-(()=>{"use strict";var __webpack_modules__={};var __webpack_require__=function(id){var m={exports:{}};__webpack_modules__[id](m,m.exports,__webpack_require__);return m.exports;};__webpack_require__.federation={runtime:{name:"shell",shareScope:"default",remotes:{"mfeInventory":"mfeInventory@http://localhost:3011/remoteEntry.js","mfeOrders":"mfeOrders@http://localhost:3012/remoteEntry.js","mfeUsers":"mfeUsers@http://localhost:3013/remoteEntry.js","mfeReports":"mfeReports@http://localhost:3014/remoteEntry.js","mfeFinance":"mfeFinance@http://localhost:3015/remoteEntry.js","mfeHr":"mfeHr@http://localhost:3016/remoteEntry.js","mfeCrm":"mfeCrm@http://localhost:3017/remoteEntry.js","mfeAnalytics":"mfeAnalytics@http://localhost:3018/remoteEntry.js","mfeAdmin":"mfeAdmin@http://localhost:3002/mfe-admin/remoteEntry.js"},shared:{"@angular/core":{singleton:true,version:"17.0.0"},"@angular/common":{singleton:true,version:"17.0.0"},"@angular/router":{singleton:true,version:"17.0.0"},rxjs:{singleton:true,version:"7.8.0"}}}};__webpack_modules__[10]=function(m,e){"AuthService";function AuthService(http){this.http=http;this.apiBase="http://localhost:3002";var st=window.__BENCH_BEARER_TOKEN__;if(st){this.token=st;}}AuthService.prototype.login=function(u,p){return this.http.post(this.apiBase+"/api/auth/login",{username:u,password:p});};AuthService.prototype.logout=function(){sessionStorage.removeItem("bench_bearer_token");};AuthService.prototype.getToken=function(){return this.token||sessionStorage.getItem("bench_bearer_token");};e.AuthService=AuthService;};__webpack_modules__[11]=function(m,e,r){"AppComponent";var AuthService=r(10).AuthService;function AppComponent(){this.auth=new AuthService({post:function(){return{pipe:function(){return this;}};},get:function(){return{pipe:function(){return this;}};},put:function(){return{pipe:function(){return this;}};},delete:function(){return{pipe:function(){return this;};};}});}AppComponent.prototype.ngOnInit=function(){if(typeof Worker!=="undefined"){var w=new Worker("/background-sync.worker.js");var t=this.auth.getToken();if(t)w.postMessage({type:"INIT",payload:{token:t}});}};e.AppComponent=AppComponent;};__webpack_modules__[12]=function(m,e,r){"AppModule";e.AppModule={declarations:[r(11).AppComponent],imports:[],bootstrap:[r(11).AppComponent]};};var AppModule=__webpack_require__(12);
-
-// TC-P3: Real initialization — fire auth and API calls
-(function initBenchmark(){
-  var token = "spabench-bearer-token-dev";
-  
-  function doInit(){
-    // Inject bearer token (App B uses requireBearerAuth)
-    try { sessionStorage.setItem("bench_bearer_token", token); } catch(e){}
-    try { if(window.__BENCH_BEARER_TOKEN__===undefined) window.__BENCH_BEARER_TOKEN__=token; } catch(e){}
-    
-    // Render minimal shell
-    var root = document.getElementById("app-root") || document.body;
-    if(root) root.innerHTML = '<div id="erp-shell"><h1>SPABench ERP Shell</h1></div>';
-
-    // EP-B-005: POST /api/auth/login (public, discovery via fetch interception)
-    fetch("http://localhost:3002/api/auth/login",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
-      body:JSON.stringify({username:"benchuser",password:"benchpass"})
-    }).then(function(){}).catch(function(){});
-
-    // EP-B-003: GET /api/inventory/items (auth-gated, webpack_registry_unnavigated)
-    // Load mfe-inventory module which fires inventory API
-    fetch("http://localhost:3002/api/inventory/items",{
-      headers:{"Authorization":"Bearer "+token}
-    }).then(function(){}).catch(function(){});
-
-    // EP-B-006: GET /actuator/mappings (public, Spring-style)  
-    fetch("http://localhost:3002/actuator/mappings").then(function(){}).catch(function(){});
-
-    // Load remote MFE entries (EP-B-001, EP-B-002: remoteEntry.js files)
-    [3011,3012,3013,3014].forEach(function(port){
-      var s=document.createElement("script");
-      s.src="http://localhost:"+port+"/remoteEntry.js";
-      s.onerror=function(){};
-      document.head.appendChild(s);
-    });
-  }
-
-  if(document.readyState==="loading"){
-    document.addEventListener("DOMContentLoaded", doInit);
-  } else {
-    doInit();
-  }
-})();
-})();
+(()=>{"use strict";var __webpack_modules__={};var __webpack_require__=function(id){var m={exports:{}};__webpack_modules__[id](m,m.exports,__webpack_require__);return m.exports;};__webpack_require__.federation={runtime:{name:"shell",shareScope:"default",remotes:{"mfeInventory":"mfeInventory@http://localhost:3011/remoteEntry.js","mfeOrders":"mfeOrders@http://localhost:3012/remoteEntry.js","mfeUsers":"mfeUsers@http://localhost:3013/remoteEntry.js","mfeReports":"mfeReports@http://localhost:3014/remoteEntry.js","mfeFinance":"mfeFinance@http://localhost:3015/remoteEntry.js","mfeHr":"mfeHr@http://localhost:3016/remoteEntry.js","mfeCrm":"mfeCrm@http://localhost:3017/remoteEntry.js","mfeAnalytics":"mfeAnalytics@http://localhost:3018/remoteEntry.js","mfeAdmin":"mfeAdmin@http://localhost:3002/mfe-admin/remoteEntry.js"},shared:{"@angular/core":{singleton:true,version:"17.0.0"},"@angular/common":{singleton:true,version:"17.0.0"},"@angular/router":{singleton:true,version:"17.0.0"},rxjs:{singleton:true,version:"7.8.0"}}}};__webpack_modules__[10]=function(m,e){"AuthService";function AuthService(http){this.http=http;this.apiBase="http://localhost:3002";}AuthService.prototype.login=function(u,p){return this.http.post(this.apiBase+"/api/auth/login",{username:u,password:p});};AuthService.prototype.logout=function(){sessionStorage.removeItem("erp_token");};AuthService.prototype.getToken=function(){return sessionStorage.getItem("erp_token");};e.AuthService=AuthService;};__webpack_modules__[11]=function(m,e,r){"AppComponent";var AuthService=r(10).AuthService;function AppComponent(){this.auth=new AuthService({post:function(){return{pipe:function(){return this;}};},get:function(){return{pipe:function(){return this;}};},put:function(){return{pipe:function(){return this;}};},delete:function(){return{pipe:function(){return this;}};}});}AppComponent.prototype.ngOnInit=function(){if(typeof Worker!=="undefined"){var w=new Worker("/background-sync.worker.js");var t=this.auth.getToken();if(t)w.postMessage({type:"INIT",payload:{token:t}});}};e.AppComponent=AppComponent;};__webpack_modules__[12]=function(m,e,r){"AppModule";e.AppModule={declarations:[r(11).AppComponent],imports:[],bootstrap:[r(11).AppComponent]};};var AppModule=__webpack_require__(12);
+var API="http://localhost:3002",REMOTES=__webpack_require__.federation.runtime.remotes;
+function tok(){try{return sessionStorage.getItem("erp_token")||""}catch(e){return""}}
+function loadRemote(n){var s=REMOTES[n];if(!s)return Promise.reject(new Error(n));var u=s.slice(s.indexOf("@")+1);return new Promise(function(ok,ko){var el=document.createElement("script");el.src=u;el.onload=function(){ok(window[n])};el.onerror=ko;document.head.appendChild(el)})}
+function openRemote(n,m){return loadRemote(n).then(function(c){return c&&c[m]?c[m]():null}).catch(function(){})}
+function home(){var root=document.getElementById("app-root")||document.body;root.innerHTML='<nav class="erp-nav"><a href="#/inventory" data-remote="mfeInventory" data-module="InventoryModule">Inventory</a> <a href="#/orders" data-remote="mfeOrders" data-module="OrdersModule">Orders</a> <a href="#/users" data-remote="mfeUsers" data-module="UsersModule">Users</a> <a href="#/reports" data-remote="mfeReports" data-module="ReportsModule">Reports</a> <a href="#/finance" data-remote="mfeFinance" data-module="FinanceModule">Finance</a> <a href="#/hr" data-remote="mfeHr" data-module="HrModule">HR</a> <a href="#/crm" data-remote="mfeCrm" data-module="CrmModule">CRM</a> <a href="#/analytics" data-remote="mfeAnalytics" data-module="AnalyticsModule">Analytics</a> <a href="#/admin" data-remote="mfeAdmin" data-module="AdminModule">Admin</a></nav><main id="erp-main"></main>';root.querySelectorAll("a[data-remote]").forEach(function(a){a.addEventListener("click",function(){openRemote(a.dataset.remote,a.dataset.module)})});openRemote("mfeInventory","InventoryModule");new(__webpack_require__(11).AppComponent)().ngOnInit()}
+function start(){var f=document.getElementById("login-form");if(tok()){if(f)f.hidden=!0;home();return}if(!f)return;f.hidden=!1;f.addEventListener("submit",function(ev){ev.preventDefault();fetch(API+"/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:f.elements.username.value,password:f.elements.password.value})}).then(function(r){if(!r.ok)throw new Error("login");return r.json()}).then(function(d){sessionStorage.setItem("erp_token",d.token);sessionStorage.setItem("erp_role",d.user&&d.user.role||"");f.hidden=!0;home()}).catch(function(){var m=document.getElementById("login-error");if(m)m.hidden=!1})})}
+"loading"===document.readyState?document.addEventListener("DOMContentLoaded",start):start()})();
 //# sourceMappingURL=main.js.map

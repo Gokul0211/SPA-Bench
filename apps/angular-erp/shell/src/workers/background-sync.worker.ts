@@ -1,24 +1,3 @@
-/**
- * SPABench App B — Background Sync Worker
- *
- * TC-P1-008 (web_worker_constructor):
- *   This worker file is instantiated in the shell via:
- *     new Worker('/background-sync.worker.js')
- *   The worker runs in a separate thread. API calls made from inside the worker
- *   are invisible to main-thread traffic interceptors — a tool that only hooks
- *   XMLHttpRequest and fetch() in the main thread will miss these.
- *
- *   The worker itself is discoverable via the Worker constructor URL in main.js.
- *   TC-P1-008 scores the discovery of the worker URL, not the endpoints inside it.
- *   The worker's API calls become visible only if the tool also instruments
- *   the worker thread (e.g. by injecting the intercept script into worker scope).
- *
- * Worker responsibilities:
- *   - Poll the sync-status endpoint every 30 seconds
- *   - Buffer failed requests for retry
- *   - Notify the main thread of connectivity changes
- */
-
 /// <reference lib="webworker" />
 
 const SYNC_ENDPOINT = '/api/sync/status';

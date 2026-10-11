@@ -1,18 +1,3 @@
-/**
- * SPABench App E — MetricsDashboard component
- *
- * EP-E-020: GET http://localhost:3005/api/dashboard/metrics
- * technique: react_useeffect_fetch (TC-P2-017)
- * phase: 2
- *
- * The useEffect fires when the `period` state changes.
- * The fetch call uses a template literal with the period variable.
- * AST tools must trace the variable to reconstruct the full URL with
- * the ?period query param.
- *
- * source_file: src/components/MetricsDashboard.tsx
- * minified_location: .next/static/chunks/pages/dashboard.js:1:4420
- */
 import React, { useState, useEffect } from 'react';
 import { DashboardService, DashboardMetrics } from '../services/DashboardService';
 
@@ -26,11 +11,9 @@ const MetricsDashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const token = sessionStorage.getItem('bench_bearer_token') || '';
+    const token = sessionStorage.getItem('saas_token') || '';
     setLoading(true);
 
-    // EP-E-020: GET http://localhost:3005/api/dashboard/metrics?period=<period>
-    // TC-P2-017: useEffect + fetch pattern — tool must trace `period` state variable
     svc.fetchMetrics(period, token)
       .then(data => { setMetrics(data); setLoading(false); })
       .catch(() => setLoading(false));

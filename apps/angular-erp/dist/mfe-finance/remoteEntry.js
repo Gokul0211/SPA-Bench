@@ -1,2 +1,1 @@
-var mfeFinance;(()=>{"use strict";mfeFinance={"FinanceModule":()=>import("./main.js").then(m=>m.FinanceModule)};})();
-//# sourceMappingURL=remoteEntry.js.map
+var mfeFinance;(()=>{"use strict";var p=new URL("./",document.currentScript&&document.currentScript.src||location.href).href;mfeFinance={"FinanceModule":()=>import(p+"main.js").then(m=>m.FinanceModule)};})();

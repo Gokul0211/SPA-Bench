@@ -1,2 +1,2 @@
-(()=>{"use strict";/* order resolver — TC-P1.5-007 backend_sourcemap_recovery */var orderResolver={}; })();
+(()=>{"use strict";var orderResolver={}; })();
 //# sourceMappingURL=order.resolver.js.map

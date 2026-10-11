@@ -1,2 +1,1 @@
-var mfeInventory;(()=>{"use strict";mfeInventory={"InventoryModule":()=>import("./main.js").then(m=>m.InventoryModule),"InventoryService":()=>import("./main.js").then(m=>m.InventoryService)};})();
-//# sourceMappingURL=remoteEntry.js.map
+var mfeInventory;(()=>{"use strict";var p=new URL("./",document.currentScript&&document.currentScript.src||location.href).href;mfeInventory={"InventoryModule":()=>import(p+"main.js").then(m=>m.InventoryModule),"InventoryService":()=>import(p+"main.js").then(m=>m.InventoryService)};})();

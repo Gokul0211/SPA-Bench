@@ -1,2 +1,1 @@
-var mfeReports;(()=>{"use strict";mfeReports={"ReportsModule":()=>import("./main.js").then(m=>m.ReportsModule)};})();
-//# sourceMappingURL=remoteEntry.js.map
+var mfeReports;(()=>{"use strict";var p=new URL("./",document.currentScript&&document.currentScript.src||location.href).href;mfeReports={"ReportsModule":()=>import(p+"main.js").then(m=>m.ReportsModule)};})();

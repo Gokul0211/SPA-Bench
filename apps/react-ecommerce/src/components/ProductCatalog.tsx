@@ -1,20 +1,3 @@
-/**
- * SPABench App C — ProductCatalog component
- *
- * EP-C-002: GET http://localhost:3003/api/v2/products/list
- * technique: fetch_interception (TC-P3-013) + fetch_api_native (TC-P2-014)
- * phase: 3 (primary — fires on page load, intercepted at network layer)
- *
- * The useEffect fires immediately on component mount, making this endpoint
- * discoverable via Phase 3 traffic interception without any user interaction.
- * It is also discoverable via Phase 2 AST analysis of the useEffect body.
- *
- * TC-P2-014 (fetch_api_native): Native fetch() with URLSearchParams construction.
- * Parameters page, limit, category are recoverable from the URLSearchParams calls.
- *
- * source_file: src/components/ProductCatalog.tsx
- * minified_location: assets/index.abc123.js:1:51020
- */
 import React, { useState, useEffect } from 'react';
 import { listProducts, Product } from '../services/ProductService';
 
@@ -30,8 +13,7 @@ const ProductCatalog: React.FC<Props> = ({ category, pageSize = 12 }) => {
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    // EP-C-002: fires on mount — interceptable via Phase 3
-    // TC-P2-014: native fetch inside listProducts → fetch_api_native pattern
+
     setLoading(true);
     listProducts({ page, limit: pageSize, category })
       .then(data => {

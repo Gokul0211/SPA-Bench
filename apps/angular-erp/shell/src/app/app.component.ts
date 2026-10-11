@@ -5,7 +5,7 @@ import { AuthService }       from './services/auth.service';
   selector: 'app-root',
   template: `
     <nav class="erp-nav">
-      <span class="erp-brand">SPABench ERP</span>
+      <span class="erp-brand">ERP</span>
       <a routerLink="/dashboard">Dashboard</a>
       <a routerLink="/orders">Orders</a>
       <a routerLink="/users">Users</a>
@@ -23,9 +23,7 @@ export class AppComponent implements OnInit {
   constructor(private auth: AuthService) {}
 
   ngOnInit(): void {
-    // Spawn background sync worker (TC-P1-008: web_worker_constructor)
-    // The Worker URL is a static string literal here — discoverable via AST.
-    // The worker itself makes API calls invisible to main-thread interceptors.
+
     if (typeof Worker !== 'undefined') {
       const worker = new Worker('/background-sync.worker.js');
       const token = this.auth.getToken();

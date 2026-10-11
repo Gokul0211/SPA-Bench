@@ -1,85 +1,25 @@
 'use strict';
 
 /**
- * SPABench WebSocket Backend — port 4003
+ * SPABench WebSocket backend (port 4003; nextjs-saas reaches it same-origin at
+ * /ws/* through its nginx).
  *
- * Serves Apps B (Angular ERP) and E (Next.js SaaS Dashboard).
+ *   /ws/notifications   user notifications and system alerts
+ *   /ws/live-dashboard  metric snapshots every 5 s
+ *   /ws/orders          order lifecycle events
+ *   /ws/metrics         host telemetry every 8 s
+ *   GET /health         liveness (plain HTTP on the same port)
  *
- * ── Four WebSocket endpoints ──────────────────────────────────────────────────
+ * Protocol (JSON text frames):
+ *   client → { type: SUBSCRIBE, channel, token? } | { type: UNSUBSCRIBE, channel } | { type: PING }
+ *   server → CONNECTED (sent right after the handshake: endpoint, channels, requiresAuth),
+ *            SUBSCRIBED, UNSUBSCRIBED, PUBLISH, PONG, ERROR, AUTH_REQUIRED
  *
- *   ws://localhost:4003/ws/notifications
- *     EP-E-018 (websocket_connection_url, phase 3)
- *     Discovered by wrapping the native WebSocket constructor in Phase 3
- *     dynamic browsing — the connection URL is captured at instantiation.
- *     Also discoverable as a string literal in NotificationService (websocket_static).
- *     Auth: bearer required.
- *     Pushes: user notification events (new_order, alert, system_message).
+ * Auth: a JWT from the REST backend's login, as ?token=<jwt> on the URL or in the
+ * SUBSCRIBE message. BENCH_BEARER_TOKEN is accepted only when
+ * BENCH_ALLOW_STATIC_TOKEN=1.
  *
- *   ws://localhost:4003/ws/live-dashboard
- *     EP-E-019 (websocket_static, phase 2)
- *     Hardcoded as WS_URL constant in DashboardService.ts — discoverable via
- *     static AST analysis without running the browser.
- *     Auth: bearer required.
- *     Pushes: real-time metric snapshots every 5 seconds.
- *
- *   ws://localhost:4003/ws/orders
- *     App B (Angular ERP) real-time order feed.
- *     Not in the 45-entry starter manifest but required for App B to function.
- *     Auth: bearer required.
- *     Pushes: order lifecycle events (created, updated, status_changed).
- *
- *   ws://localhost:4003/ws/metrics
- *     App B (Angular ERP) system metrics feed.
- *     Not in the starter manifest.
- *     Auth: bearer required.
- *     Pushes: CPU/memory/request-rate telemetry every 8 seconds.
- *
- * ── Message protocol ─────────────────────────────────────────────────────────
- *
- *   All messages are JSON-encoded strings.
- *
- *   Client → Server:
- *     { "type": "SUBSCRIBE",   "channel": "<channel_name>", "token": "<optional_bearer>" }
- *     { "type": "UNSUBSCRIBE", "channel": "<channel_name>" }
- *     { "type": "PING" }
- *
- *   Server → Client (pushed events):
- *     { "type": "CONNECTED",   "endpoint": "/ws/<name>", "channels": [...], "requiresAuth": true }
- *     { "type": "SUBSCRIBED",  "channel": "<channel_name>", "message": "Subscription active" }
- *     { "type": "UNSUBSCRIBED","channel": "<channel_name>" }
- *     { "type": "PUBLISH",     "channel": "<channel_name>", "payload": { ... }, "timestamp": "..." }
- *     { "type": "PONG",        "timestamp": "..." }
- *     { "type": "ERROR",       "code": "<CODE>", "message": "..." }
- *     { "type": "AUTH_REQUIRED","message": "Bearer token required" }
- *
- *   The CONNECTED message (TC-P3-012 websocket_payload_sample) is sent immediately
- *   after the WebSocket handshake completes — before any SUBSCRIBE from the client.
- *   This is the "first message after WS connection" that the benchmark measures.
- *
- * ── Auth ──────────────────────────────────────────────────────────────────────
- *
- *   Bearer token passed in one of:
- *     1. Query string:       ws://host:4003/ws/notifications?token=<bearer>
- *     2. SUBSCRIBE message:  { "type": "SUBSCRIBE", "token": "<bearer>" }
- *
- *   The WS protocol does not support custom headers from browser clients, so
- *   the query-string method is the standard approach for SPA WebSocket auth.
- *   TC-AUTH-004 (auth_bearer_injection) injects BENCH_BEARER_TOKEN as a query param.
- *
- * ── HTTP health endpoint ──────────────────────────────────────────────────────
- *
- *   GET http://localhost:4003/health → { status: 'ok', ... }
- *
- *   The docker-compose uses `condition: service_started` (not service_healthy) for
- *   websocket-backend, so healthcheck is advisory. sanity_check.py still probes it.
- *   Implemented by handling the HTTP 'request' event on the underlying http.Server
- *   before upgrading WS connections — the same port handles both protocols.
- *
- * ── Environment variables ─────────────────────────────────────────────────────
- *
- *   PORT                4003
- *   BENCH_AUTH_SECRET   JWT signing secret (shared with rest-backend + graphql-backend)
- *   BENCH_BEARER_TOKEN  Static pre-generated bearer token
+ * Environment: PORT (4003), BENCH_AUTH_SECRET, BENCH_BEARER_TOKEN, BENCH_ALLOW_STATIC_TOKEN.
  */
 
 const http  = require('http');
@@ -88,8 +28,9 @@ const jwt   = require('jsonwebtoken');
 const { URL } = require('url');
 
 const PORT          = parseInt(process.env.PORT || '4003', 10);
-const AUTH_SECRET   = process.env.BENCH_AUTH_SECRET  || 'spabench-dev-secret-do-not-use-in-production';
+const AUTH_SECRET   = process.env.BENCH_AUTH_SECRET  || 'dev-secret-do-not-use-in-production';
 const BEARER_TOKEN  = process.env.BENCH_BEARER_TOKEN || 'spabench-bearer-token-dev';
+const ALLOW_STATIC_TOKEN = process.env.BENCH_ALLOW_STATIC_TOKEN === '1';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 /**
@@ -98,7 +39,7 @@ const BEARER_TOKEN  = process.env.BENCH_BEARER_TOKEN || 'spabench-bearer-token-d
  */
 function validateToken(token) {
   if (!token) return null;
-  if (token === BEARER_TOKEN) return { username: 'benchuser', role: 'admin' };
+  if (ALLOW_STATIC_TOKEN && token === BEARER_TOKEN) return { username: 'benchadmin', role: 'admin' };
   try {
     const payload = jwt.verify(token, AUTH_SECRET);
     return { username: payload.sub, role: payload.role };
@@ -133,7 +74,7 @@ function sendError(ws, code, message) {
 
 // ── Channel definitions ───────────────────────────────────────────────────────
 // Each WS path exposes a fixed set of subscribable channels.
-// This is the information a tool recovers from TC-P3-012 (websocket_payload_sample)
+// The CONNECTED message lists these channels for the endpoint.
 // — the CONNECTED message lists all available channels.
 
 const ENDPOINT_CHANNELS = {
@@ -189,7 +130,7 @@ setInterval(() => {
     notificationId: `notif-${Date.now()}`,
     type:           NOTIFICATION_TYPES[_notifIdx],
     title:          `Notification: ${NOTIFICATION_TYPES[_notifIdx]}`,
-    body:           `Auto-generated benchmark notification #${_notifIdx + 1}`,
+    body:           `Notification #${_notifIdx + 1}`,
     read:           false,
     userId:         'user-001',
   });
@@ -200,8 +141,8 @@ setInterval(() => {
   broadcast('/ws/notifications', 'notifications.alerts', {
     alertId:   `alert-${Date.now()}`,
     severity:  ['INFO', 'WARNING', 'ERROR'][Math.floor(Math.random() * 3)],
-    message:   'Benchmark system health check alert',
-    source:    'spabench-monitor',
+    message:   'Scheduled system health check alert',
+    source:    'ops-monitor',
     timestamp: new Date().toISOString(),
   });
 }, 20000);
@@ -308,9 +249,9 @@ function handleConnection(ws, req) {
   // Register in path-level client set
   pathClients[pathname].add(ws);
 
-  // ── TC-P3-012: websocket_payload_sample ───────────────────────────────────
+  // ── CONNECTED: first message after the handshake ─────────────────────────────
   // Send CONNECTED as the first message immediately after handshake.
-  // This is "the first message after WS connection" that the benchmark captures.
+  // Sent before any SUBSCRIBE.
   // It reveals: endpoint path, available channels, and whether auth is required.
   // A tool that receives this message can enumerate all channels without subscribing.
   send(ws, {
@@ -319,7 +260,7 @@ function handleConnection(ws, req) {
     channels:     ENDPOINT_CHANNELS[pathname],
     requiresAuth: true,
     authenticated: !!user,
-    protocol:     'spabench-ws/1.0',
+    protocol:     'realtime-ws/1.0',
     message:      user
       ? `Connected to ${pathname} as ${user.username}`
       : `Connected to ${pathname} — send SUBSCRIBE with token to receive events`,
@@ -429,7 +370,7 @@ const httpServer = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       status:               'ok',
-      service:              'spabench-websocket-backend',
+      service:              'realtime-gateway',
       endpoints:            Object.keys(ENDPOINT_CHANNELS),
       totalConnections,
       connectionsByEndpoint,

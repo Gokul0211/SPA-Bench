@@ -1,264 +1,252 @@
 #!/usr/bin/env python3
 """
-SPABench manifest builder.
+Build manifest.json (the SPABench ground truth) from apps/*/manifest-partial.json.
 
-Assembles the master manifest.json from the individual app manifest-partial.json
-fragments in apps/*/manifest-partial.json, combined with the app metadata defined
-in this script.
+The partials are the only hand-written input: which endpoints each app's
+client references, how they are reached (served / external host / probe-only),
+auth, parameters, and — for paths that no single string literal contains — in
+which artifact the path is *composed*. Everything else is derived from the
+served artifacts (see spabench/artifacts.py):
+
+  discovery_class     easiest artifact + form in which the endpoint is present:
+                        html_literal, bundle_literal, bundle_composed,
+                        sourcemap_literal, sourcemap_composed, runtime_data,
+                        graphql_client_operation, graphql_sourcemap_operation,
+                        graphql_introspection_only, probe_only
+  evidence            every artifact the endpoint is present in (+ location)
+  exclusive           present in exactly one artifact class
+  minified_location   first literal occurrence in a served bundle (path:line:col, 1-based)
+  source_file         source-map source that contains it, if any
+  discovery_notes     written from the evidence when the partial gives none
+  summary counts      totals, per kind/method/class
+
+The build fails when an annotation contradicts the artifacts (e.g. "composed in
+the bundle" but a segment is missing from it, or no evidence at all).
 
 Usage:
-    python build_manifest.py
-    python build_manifest.py --dry-run   # print output without writing
-    python build_manifest.py --validate  # run validate_manifest.py after building
+  python build_manifest.py            write manifest.json
+  python build_manifest.py --check    exit 1 if manifest.json is not what the partials produce
 """
 
 import argparse
+import collections
+import datetime
 import json
-import subprocess
+import os
+import re
 import sys
-from datetime import datetime, timezone
-from pathlib import Path
+from urllib.parse import urlparse
 
-APPS_DIR     = Path(__file__).parent / "apps"
-MANIFEST_OUT = Path(__file__).parent / "manifest.json"
+from spabench.artifacts import ROOT, Corpus, literal_runs, line_col, segments, url_to_file
 
-# ---------------------------------------------------------------------------
-# App metadata (stable, manually maintained)
-# ---------------------------------------------------------------------------
-APP_METADATA = [
-    {
-        "id": "angular-permit",
-        "name": "App A — Angular Permit-to-Work SPA",
-        "framework": "angular",
-        "framework_version": "8.0.0",
-        "build_tool": "angular-cli-webpack",
-        "port": 3001,
-        "base_url": "http://localhost:3001",
-        "source_maps_exposed": True,
-        "source_map_count": 26,
-        "auth_required": True,
-        "auth_method": "form",
-        "description": (
-            "Tests inter-procedural variable resolution, source map decompilation, "
-            "and sub-application federation in Angular 8 with aggressive variable renaming."
-        ),
-        "primary_challenges": [
-            "constructor_injection_depth",
-            "sub_app_discovery",
-            "source_map_decompilation",
-            "obfuscated_variable_renaming",
-        ],
-        "target_endpoint_count": 421,
-        "sub_applications": [
-            "permit-core",
-            "permit-admin",
-            "permit-reports",
-            "permit-mobile",
-        ],
-    },
-    {
-        "id": "angular-erp",
-        "name": "App B — Angular ERP (Module Federation)",
-        "framework": "angular",
-        "framework_version": "17.0.0",
-        "build_tool": "webpack5-module-federation",
-        "port": 3002,
-        "base_url": "http://localhost:3002",
-        "source_maps_exposed": True,
-        "source_map_count": 4,
-        "auth_required": True,
-        "auth_method": "bearer",
-        "description": (
-            "Tests Module Federation micro-frontend discovery, OData patterns, "
-            "Webpack module registry harvest, and unnavigated module enumeration at enterprise scale."
-        ),
-        "primary_challenges": [
-            "module_federation_discovery",
-            "unnavigated_module_harvest",
-            "odata_patterns",
-            "inter_procedural_resolution",
-        ],
-        "target_endpoint_count": 538,
-        "sub_applications": [
-            "mfe-inventory", "mfe-orders", "mfe-users", "mfe-reports",
-            "mfe-finance", "mfe-hr", "mfe-crm", "mfe-analytics",
-            "mfe-purchasing", "mfe-warehouse", "mfe-logistics", "mfe-quality",
-            "mfe-maintenance", "mfe-assets", "mfe-compliance", "mfe-projects",
-            "mfe-budgeting", "mfe-contracts", "mfe-vendors", "mfe-customers",
-            "mfe-support", "mfe-notifications", "mfe-settings", "mfe-admin",
-        ],
-    },
-    {
-        "id": "react-ecommerce",
-        "name": "App C — React E-Commerce (Vite)",
-        "framework": "react",
-        "framework_version": "18.0.0",
-        "build_tool": "vite",
-        "port": 3003,
-        "base_url": "http://localhost:3003",
-        "source_maps_exposed": True,
-        "source_map_count": 31,
-        "auth_required": True,
-        "auth_method": "bearer",
-        "description": (
-            "Tests JSX source map decompilation, native Fetch API and Axios patterns, "
-            "React component route naming as a false positive source, and checkout micro-app isolation."
-        ),
-        "primary_challenges": [
-            "jsx_source_maps",
-            "axios_wrapper_patterns",
-            "checkout_microapp_isolation",
-            "react_component_fp_suppression",
-        ],
-        "target_endpoint_count": 538,
-        "sub_applications": [
-            "checkout-flow",
-            "product-catalog",
-            "user-account",
-        ],
-    },
-    {
-        "id": "vue-portal",
-        "name": "App D — Vue Government Portal (No Source Maps)",
-        "framework": "vue",
-        "framework_version": "3.0.0",
-        "build_tool": "nuxt",
-        "port": 3004,
-        "base_url": "http://localhost:3004",
-        "source_maps_exposed": False,
-        "source_map_count": 2,
-        "auth_required": True,
-        "auth_method": "form",
-        "description": (
-            "Tests tool performance when source maps are intentionally restricted. "
-            "Validates AST variable resolution and dynamic interception operate independently. "
-            "Includes SOAP-bridged legacy endpoints."
-        ),
-        "primary_challenges": [
-            "source_map_absence",
-            "soap_bridge_discovery",
-            "vue_composition_api_patterns",
-            "graceful_degradation",
-        ],
-        "target_endpoint_count": 284,
-        "sub_applications": [],
-    },
-    {
-        "id": "nextjs-saas",
-        "name": "App E — Next.js SaaS Dashboard (GraphQL + WebSocket)",
-        "framework": "nextjs",
-        "framework_version": "14.0.0",
-        "build_tool": "nextjs-compiler",
-        "port": 3005,
-        "base_url": "http://localhost:3005",
-        "source_maps_exposed": True,
-        "source_map_count": 41,
-        "auth_required": True,
-        "auth_method": "totp",
-        "description": (
-            "Tests GraphQL schema introspection, Next.js API route definitions, "
-            "dynamic route segments, and WebSocket endpoint discovery. "
-            "Vercel-style deployment exposes source maps by default."
-        ),
-        "primary_challenges": [
-            "graphql_introspection",
-            "dynamic_route_segments",
-            "websocket_discovery",
-            "nextjs_api_routes",
-        ],
-        "target_endpoint_count": 612,
-        "sub_applications": [],
-    },
-]
+APPS = ['angular-permit', 'angular-erp', 'react-ecommerce', 'vue-portal', 'nextjs-saas']
+VERSION = '3.0.0'
+CLASS_ORDER = ['html_literal', 'bundle_literal', 'bundle_composed', 'sourcemap_literal', 'sourcemap_composed',
+               'runtime_data', 'graphql_client_operation', 'graphql_sourcemap_operation',
+               'graphql_introspection_only', 'probe_only']
 
 
-# ---------------------------------------------------------------------------
-# Builder
-# ---------------------------------------------------------------------------
-def load_partial(app_id: str) -> list[dict]:
-    """Load endpoints from apps/<app_id>/manifest-partial.json."""
-    partial_path = APPS_DIR / app_id / "manifest-partial.json"
-    if not partial_path.exists():
-        print(f"  ⚠  No manifest-partial.json found for '{app_id}' — using empty endpoint list")
-        return []
-    with partial_path.open("r", encoding="utf-8") as fh:
-        data = json.load(fh)
-    return data.get("endpoints", [])
+class BuildError(Exception):
+    pass
 
 
-def build_manifest() -> dict:
-    """Assemble the master manifest from app metadata + partial fragments."""
-    apps = []
-    total_endpoints = 0
+def where(corpus_hit):
+    where_, text, off = corpus_hit
+    line, col = line_col(text, off)
+    return f'{where_}:{line}:{col}'
 
-    for meta in APP_METADATA:
-        app_id    = meta["id"]
-        endpoints = load_partial(app_id)
-        total_endpoints += len(endpoints)
 
-        app_entry = {**meta, "endpoints": endpoints}
-        apps.append(app_entry)
-        print(f"  ✓ {app_id}: {len(endpoints)} endpoint(s)")
+def evidence_rest(corpus, row):
+    path = urlparse(row['url']).path
+    runs, segs = literal_runs(path), segments(path)
+    hint = row.get('evidence_hint', {})
+    ev = {}
+    for art in ('html', 'bundle', 'sourcemap'):
+        hits = [corpus.find(art, r) for r in runs]
+        if all(hits):
+            ev[art] = {'form': 'literal', 'location': where(hits[0])}
+    for art in hint.get('composed', []):
+        if art in ev:
+            continue
+        missing = [s for s in segs if not corpus.find(art, s)]
+        if missing:
+            raise BuildError(f"{row['id']}: annotated as composed in {art}, but segment(s) {missing} are not in any {art} string literal")
+        ev[art] = {'form': 'composed'}
+    if hint.get('runtime'):
+        head, last = segs[:-1], segs[-1]
+        missing = [s for s in head if not corpus.find('bundle', s)]
+        if missing:
+            raise BuildError(f"{row['id']}: runtime-composed, but prefix segment(s) {missing} are not in the bundle")
+        data = next((rel for text, rel, _, _ in corpus.data if last in text), None)
+        ev['runtime'] = {'form': 'runtime', 'data_source': data}
+    return ev
 
-    manifest = {
-        "version": "1.0.0",
-        "generated": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "apps": apps,
+
+def evidence_graphql(corpus, row):
+    op = row['graphql']['operation']
+    ev = {}
+    for art in ('html', 'bundle', 'sourcemap'):
+        hit = corpus.identifier(art, op)
+        if hit:
+            ev[art] = {'form': 'operation', 'location': where(hit)}
+    return ev
+
+
+def classify(row, ev):
+    if row['kind'] == 'graphql':
+        if 'bundle' in ev or 'html' in ev:
+            return 'graphql_client_operation'
+        if 'sourcemap' in ev:
+            return 'graphql_sourcemap_operation'
+        return 'graphql_introspection_only'
+    # Easiest artifact first (what the page serves > what the bundle contains >
+    # what only the source maps contain); within an artifact, literal before composed.
+    for art in ('html', 'bundle', 'sourcemap'):
+        if art in ev:
+            return f"{art}_{ev[art]['form']}"
+    if 'runtime' in ev:
+        return 'runtime_data'
+    if row.get('reachability') == 'probe':
+        return 'probe_only'
+    raise BuildError(f"{row['id']} ({row['method']} {row['url']}): no evidence in any served artifact — "
+                     f"add an evidence_hint or remove the entry")
+
+
+def notes_for(row, ev, cls):
+    parts = []
+    for art in ('html', 'bundle', 'sourcemap', 'runtime'):
+        e = ev.get(art)
+        if not e:
+            continue
+        if art == 'runtime':
+            parts.append('last path segment only known at runtime' + (f" (from {e['data_source']})" if e.get('data_source') else ''))
+        elif 'location' in e:
+            parts.append(f"{e['form']} in {art} at {e['location']}")
+        else:
+            parts.append(f"{e['form']} in {art}")
+    if cls == 'graphql_introspection_only':
+        parts.append('operation name appears in no client artifact; recoverable through schema introspection')
+    if cls == 'probe_only':
+        parts.append('referenced by no client artifact; found by probing well-known paths')
+    return '; '.join(parts) + '.'
+
+
+def build_endpoint(app, corpus, row):
+    ev = evidence_graphql(corpus, row) if row['kind'] == 'graphql' else evidence_rest(corpus, row)
+    cls = classify(row, ev)
+    present = [a for a in ('html', 'bundle', 'sourcemap', 'runtime') if a in ev]
+    if cls == 'graphql_introspection_only':
+        present = ['introspection']
+    if cls == 'probe_only':
+        present = ['probe']
+    bundle_loc = ev.get('bundle', {}).get('location') if ev.get('bundle', {}).get('form') in ('literal', 'operation') else None
+    smap = ev.get('sourcemap', {}).get('location')
+    out = {
+        'id': row['id'],
+        'url': row['url'],
+        'method': row['method'],
+        'kind': row['kind'],
+        'test_case': row['test_case'],
+        'discovery_class': cls,
+        'evidence': ev,
+        'present_in': present,
+        'exclusive': len(present) == 1,
+        'reachability': row['reachability'],
+        'auth_required': row['auth_required'],
+        'auth_method': row.get('auth_method') or (row['_app_auth'] if row['auth_required'] else 'none'),
+        'parameters': row.get('parameters', []),
+        'security_relevant': row.get('security_finding_type', 'none') != 'none',
+        'security_finding_type': row.get('security_finding_type', 'none'),
+        'source_file': smap.split('::', 1)[1].rsplit(':', 2)[0] if smap else None,
+        'minified_location': bundle_loc,
+        'discovery_notes': row.get('notes') or notes_for(row, ev, cls),
     }
+    if 'design_technique' in row:
+        out['design_technique'] = row['design_technique']
+    if 'graphql' in row:
+        out['graphql'] = row['graphql']
+    return out
 
-    print(f"\n  Total: {len(apps)} apps, {total_endpoints} endpoints")
-    return manifest
+
+def build():
+    apps, errors = [], []
+    for app_id in APPS:
+        part = json.load(open(os.path.join(ROOT, 'apps', app_id, 'manifest-partial.json'), encoding='utf-8'))
+        meta = part['app']
+        corpus = Corpus(app_id)
+        eps = []
+        for row in part['endpoints']:
+            row = dict(row, _app_auth=meta['auth_method'])
+            try:
+                eps.append(build_endpoint(app_id, corpus, row))
+            except BuildError as e:
+                errors.append(str(e))
+        assets = []
+        for a in part.get('assets', []):
+            served = url_to_file(app_id, a['url']) is not None
+            if not served:
+                errors.append(f"{a['id']}: asset {a['url']} is not served by {app_id}")
+            assets.append(dict(a, served=served))
+        apps.append({**meta, 'endpoint_count': len(eps), 'test_case_count': sum(e['test_case'] for e in eps),
+                     'endpoints': eps, 'assets': assets})
+    if errors:
+        raise BuildError('\n'.join(errors))
+
+    allep = [e for a in apps for e in a['endpoints']]
+    distinct = {(a['id'], e['method'] if e['kind'] != 'graphql' else 'GRAPHQL',
+                 re.sub(r'\{[^}]+\}', '{}', urlparse(e['url']).path) + ('#' + e['graphql']['operation'] if 'graphql' in e else ''))
+                for a in apps for e in a['endpoints']}
+    distinct_paths = {(a['id'], re.sub(r'\{[^}]+\}', '{}', urlparse(e['url']).path) + ('#' + e['graphql']['operation'] if 'graphql' in e else ''))
+                      for a in apps for e in a['endpoints']}
+    summary = {
+        'apps': len(apps),
+        'endpoints': len(allep),
+        'test_cases': sum(e['test_case'] for e in allep),
+        'distinct_method_paths': len(distinct),
+        'distinct_paths': len(distinct_paths),
+        'assets': sum(len(a['assets']) for a in apps),
+        'auth_required': sum(e['auth_required'] for e in allep),
+        'security_relevant': sum(e['security_relevant'] for e in allep),
+        'by_kind': dict(sorted(collections.Counter(e['kind'] for e in allep).items())),
+        'by_method': dict(sorted(collections.Counter(e['method'] for e in allep).items())),
+        'by_reachability': dict(sorted(collections.Counter(e['reachability'] for e in allep).items())),
+        'by_discovery_class': {c: n for c in CLASS_ORDER
+                               for n in [sum(e['discovery_class'] == c for e in allep)] if n},
+    }
+    return {'version': VERSION, 'generated': None, 'summary': summary, 'apps': apps}
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Assemble master manifest.json from app partial fragments"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print assembled manifest without writing to disk",
-    )
-    parser.add_argument(
-        "--validate",
-        action="store_true",
-        help="Run validate_manifest.py after building",
-    )
-    parser.add_argument(
-        "--output",
-        default=str(MANIFEST_OUT),
-        help=f"Output path (default: {MANIFEST_OUT})",
-    )
-    args = parser.parse_args()
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--check', action='store_true', help='compare with manifest.json instead of writing it')
+    ap.add_argument('--output', default=os.path.join(ROOT, 'manifest.json'))
+    args = ap.parse_args()
+    try:
+        new = build()
+    except BuildError as e:
+        print('BUILD FAILED\n' + str(e), file=sys.stderr)
+        return 1
 
-    print("SPABench manifest builder")
-    print(f"  Apps directory : {APPS_DIR}")
-    print(f"  Output         : {args.output}\n")
-
-    manifest = build_manifest()
-
-    if args.dry_run:
-        print("\n── Dry run output ──────────────────────────────────────────────")
-        print(json.dumps(manifest, indent=2))
-        return 0
-
-    out_path = Path(args.output)
-    with out_path.open("w", encoding="utf-8") as fh:
-        json.dump(manifest, fh, indent=2)
-        fh.write("\n")
-
-    print(f"\n✓ Written to {out_path}")
-
-    if args.validate:
-        print("\nRunning validation…\n")
-        result = subprocess.run(
-            [sys.executable, "validate_manifest.py", "--manifest", str(out_path), "--verbose"],
-            cwd=Path(__file__).parent,
-        )
-        return result.returncode
-
+    old = None
+    if os.path.exists(args.output):
+        try:
+            old = json.load(open(args.output, encoding='utf-8'))
+        except ValueError:
+            old = None
+    same = old is not None and {k: v for k, v in old.items() if k != 'generated'} == {k: v for k, v in new.items() if k != 'generated'}
+    if args.check:
+        print('manifest.json is up to date' if same else 'manifest.json is OUT OF DATE — run python build_manifest.py')
+        return 0 if same else 1
+    new['generated'] = old['generated'] if same else datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+    with open(args.output, 'w', encoding='utf-8', newline='\n') as f:
+        json.dump(new, f, indent=2, ensure_ascii=False)
+        f.write('\n')
+    s = new['summary']
+    print(f"wrote {os.path.relpath(args.output, ROOT)}: {s['endpoints']} endpoints ({s['test_cases']} test cases), "
+          f"{s['distinct_paths']} distinct paths, {s['assets']} assets")
+    print('by discovery class:', s['by_discovery_class'])
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())

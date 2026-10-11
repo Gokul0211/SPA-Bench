@@ -1,49 +1,3 @@
-/**
- * SPABench App A — Angular Permit-to-Work SPA
- * src/app/features/mobile-legacy/mobile-legacy.service.ts
- *
- * BUNDLE LOCATION: permit-mobile-legacy.js (commented-out chunk)
- *
- * BENCHMARK RELEVANCE — TC-P1-010 (commented_script, Phase 1)
- * ────────────────────────────────────────────────────────────────────────────
- * This module is "disabled" — its script tag in index.html is commented out:
- *   <!-- <script src="/permit-mobile-legacy.js"> -->
- *
- * TC-P1-010 (commented_script, Phase 1):
- * "This endpoint exists and is callable. It is excluded from the production
- * navigation flow but the code is still bundled. Represents a common situation
- * in enterprise code where legacy modules are 'disabled' by commenting out
- * their script tag but never actually removed."
- *
- * A Phase 1 tool that parses HTML comments in index.html finds the URL
- * `/permit-mobile-legacy.js` and adds it to the JS analysis queue. When Phase 2
- * analyses this file, it finds the mobile API endpoints below.
- *
- * A tool that does NOT parse HTML comments misses this chunk entirely — and
- * with it, all mobile API endpoints. These are not small test endpoints:
- * the mobile API is a full parallel API surface with its own authentication
- * and data access patterns.
- *
- * INDEX.HTML PATTERN (to be placed in dist/index.html in Phase 3):
- * ─────────────────────────────────────────────────────────────────────────────
- *   <!-- Legacy mobile module — disabled pending security review -->
- *   <!-- <script src="/permit-mobile-legacy.js"></script> -->
- *   <!-- Enable by removing comment tags above -->
- *
- * SECURITY RELEVANCE:
- * The mobile API bypasses some desktop-flow checks (form validation,
- * CSRF tokens) because it was built for a native app client. The endpoints
- * are still live and callable via REST — they represent legacy attack surface
- * that an assessor would prioritise once found.
- *
- * ENDPOINTS IN THIS FILE:
- *   GET  /api/mobile/v1/permits              (mobile permit list)
- *   POST /api/mobile/v1/permits/quick-submit (simplified permit creation)
- *   GET  /api/mobile/v1/work-orders          (work order list)
- *   POST /api/mobile/v1/location/checkin     (GPS check-in)
- *   GET  /api/mobile/v1/offline-sync         (offline data sync bundle)
- */
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -84,12 +38,6 @@ export interface OfflineSyncBundle {
   nextSyncToken: string;
 }
 
-/**
- * Mobile API base — separate from the desktop API base.
- * This is a string literal because the mobile module doesn't use the Angular DI
- * chain — it was built as a standalone service with hardcoded config.
- * This makes it discoverable by simpler static analysis once the chunk is found.
- */
 const MOBILE_API_BASE = 'http://localhost:4001/api/mobile/v1/';
 
 @Injectable({
@@ -99,7 +47,7 @@ export class MobileLegacyService {
   constructor(private readonly http: HttpClient) {}
 
   private buildHeaders(): HttpHeaders {
-    const token = localStorage.getItem('spabench_permit_token') || '';
+    const token = localStorage.getItem('ptw_token') || '';
     return new HttpHeaders({
       Authorization: `Bearer ${token}`,
       'X-Mobile-Client': 'permit-app/2.1',  // Mobile-specific header

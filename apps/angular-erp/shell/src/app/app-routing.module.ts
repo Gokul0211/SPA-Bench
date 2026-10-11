@@ -1,24 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-/**
- * Shell routing — CRITICAL BENCHMARK CONSTRAINT
- *
- * This routing table intentionally has NO route pointing to the admin
- * or legacy-reports features. This is what makes EP-B-003 and EP-B-004
- * classified as:
- *   exclusive: true
- *   technique: webpack_registry_unnavigated
- *
- * Although mfe-inventory is registered as a remote (and its modules including
- * __webpack_modules__[847] are loaded into the registry when the remoteEntry.js
- * is fetched), the Angular router never navigates to '/inventory', so the
- * InventoryModule is never bootstrapped and module 847 is never called.
- *
- * A tool that relies only on live traffic interception (visiting all navigable
- * routes) will never trigger module 847. Only a tool that reads __webpack_modules__
- * directly and iterates all entries finds EP-B-003 and EP-B-004.
- */
 const routes: Routes = [
   {
     path: '',

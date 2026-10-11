@@ -1,1 +1,1 @@
-export default function Home() { return <div>SPABench SaaS</div>; }
+export default function Home() { return <div>SaaS Dashboard</div>; }

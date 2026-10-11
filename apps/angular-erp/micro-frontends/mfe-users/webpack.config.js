@@ -1,7 +1,7 @@
 const { ModuleFederationPlugin } = require('webpack').container;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
-// SPABench App B — mfe-users webpack config, port 3013
+
 module.exports = {
   mode:'production', entry:'./src/main.ts',
   output:{ path:path.resolve(__dirname,'../../dist/mfe-users'), filename:'main.js',

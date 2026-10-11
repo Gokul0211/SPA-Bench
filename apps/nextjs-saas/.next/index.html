@@ -1,10 +1,25 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SPABench SaaS</title><!-- TC-P1-006 (link_modulepreload): Next.js modulepreload for ESM chunks --><link rel="modulepreload" href="/_next/static/chunks/main.js"><link rel="modulepreload" href="/_next/static/chunks/pages/dashboard.js"></head><body><div id="__next"></div><script>
-// Inject bearer token before app loads (TC-AUTH-004, Apps B/C/E use bearer)
-(function(){
-  var t = "spabench-bearer-token-dev";
-  try { sessionStorage.setItem("bench_bearer_token", t); } catch(e){}
-  try { localStorage.setItem("bench_bearer_token", t); } catch(e){}
-})();
-</script>
-<script src="/_next/static/chunks/main.js" type="module"></script>
-</body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SaaS Dashboard</title>
+<link rel="modulepreload" href="/_next/static/chunks/main.js">
+<link rel="modulepreload" href="/_next/static/chunks/pages/dashboard.js"></head>
+<body>
+<div id="__next"></div>
+<form id="login-form" hidden>
+  <label>Username <input name="username" autocomplete="username" required></label>
+  <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+  <button type="submit">Sign in</button>
+</form>
+<form id="mfa-form" hidden>
+  <label>Authenticator code <input name="code" inputmode="numeric" autocomplete="one-time-code" required></label>
+  <button type="submit">Verify</button>
+</form>
+<p id="login-error" hidden>Sign-in failed.</p>
+<script src="/_next/static/chunks/webpack-runtime.js" defer></script>
+<script src="/_next/static/chunks/polyfills.js" defer></script>
+<script src="/_next/static/chunks/framework.js" defer></script>
+<script src="/_next/static/chunks/main.js" defer></script>
+<script src="/_next/static/b7d1c2a4e9f0/_buildManifest.js" defer></script>
+<script src="/_next/static/b7d1c2a4e9f0/_ssgManifest.js" defer></script>
+</body>
+</html>

@@ -1,46 +1,33 @@
 'use strict';
 
 /**
- * SPABench auth middleware
+ * SPABench auth middleware — one policy for every route bundle.
  *
- * Two strategies used across the benchmark apps:
+ * A request is authenticated by the first of:
+ *   1. Authorization: Bearer <JWT>   issued by POST /api/auth/login
+ *                                    or POST /api/auth/mfa/verify
+ *   2. the express-session cookie    set by the same login endpoint
+ *   3. Authorization: Bearer <BENCH_BEARER_TOKEN>
+ *        only when BENCH_ALLOW_STATIC_TOKEN=1 (debugging aid, off by default,
+ *        so a benchmark run always has to log in)
  *
- *   requireFormAuth  — Apps A and D (form-based login)
- *     Accepts:
- *       1. Authorization: Bearer <JWT>  (JWT issued by POST /api/auth/login)
- *       2. express-session cookie       (set by same login endpoint)
- *     Returns 401 if neither is valid.
- *
- *   requireBearerAuth — Apps B, C, E (bearer token)
- *     Accepts:
- *       1. Authorization: Bearer spabench-bearer-token-dev  (static dev token)
- *       2. Authorization: Bearer <JWT>  (JWT from any login endpoint)
- *     Returns 401 if header is missing or token is invalid.
- *
- * Both middlewares attach req.benchUser = { username, role } on success.
+ * How a client authenticates (bearer header vs cookie) is a property of the
+ * client, not of the route, so several apps can share one API path.
+ * On success req.benchUser = { username, role }.
  */
 
 const jwt = require('jsonwebtoken');
 
-const AUTH_SECRET    = process.env.BENCH_AUTH_SECRET || 'spabench-dev-secret-do-not-use-in-production';
-const BEARER_TOKEN   = process.env.BENCH_BEARER_TOKEN || 'spabench-bearer-token-dev';
+const AUTH_SECRET        = process.env.BENCH_AUTH_SECRET  || 'dev-secret-do-not-use-in-production';
+const BEARER_TOKEN       = process.env.BENCH_BEARER_TOKEN || 'spabench-bearer-token-dev';
+const ALLOW_STATIC_TOKEN = process.env.BENCH_ALLOW_STATIC_TOKEN === '1';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/**
- * Extract the raw token string from an Authorization header.
- * Returns null if the header is absent or malformed.
- */
 function extractBearer(req) {
   const header = req.headers['authorization'] || '';
   if (!header.startsWith('Bearer ')) return null;
   return header.slice(7).trim() || null;
 }
 
-/**
- * Validate a JWT issued by this server.
- * Returns the decoded payload or null.
- */
 function verifyJwt(token) {
   try {
     return jwt.verify(token, AUTH_SECRET);
@@ -49,49 +36,37 @@ function verifyJwt(token) {
   }
 }
 
-// ── Form auth (Apps A, D) ──────────────────────────────────────────────────────
-function requireFormAuth(req, res, next) {
-  // 1. Check Authorization: Bearer <JWT>
+/** Resolve the caller to { username, role } or null. */
+function identify(req) {
   const token = extractBearer(req);
   if (token) {
-    const payload = verifyJwt(token);
-    if (payload) {
-      req.benchUser = { username: payload.sub, role: payload.role };
-      return next();
+    if (ALLOW_STATIC_TOKEN && token === BEARER_TOKEN) {
+      return { username: 'benchadmin', role: 'admin' };
     }
-    return res.status(401).json({ error: 'Unauthorized', detail: 'Invalid or expired JWT' });
+    const payload = verifyJwt(token);
+    if (payload) return { username: payload.sub, role: payload.role };
   }
-
-  // 2. Check session cookie
-  if (req.session && req.session.benchUser) {
-    req.benchUser = req.session.benchUser;
-    return next();
-  }
-
-  return res.status(401).json({ error: 'Unauthorized', detail: 'Login required' });
+  if (req.session && req.session.benchUser) return req.session.benchUser;
+  return null;
 }
 
-// ── Bearer auth (Apps B, C, E) ────────────────────────────────────────────────
-function requireBearerAuth(req, res, next) {
-  const token = extractBearer(req);
-  if (!token) {
-    return res.status(401).json({ error: 'Unauthorized', detail: 'Missing Authorization header' });
+function requireAuth(req, res, next) {
+  const user = identify(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized', detail: 'Login required' });
   }
-
-  // 1. Accept static dev token (for automated benchmark runs that inject it directly)
-  if (token === BEARER_TOKEN) {
-    req.benchUser = { username: 'benchuser', role: 'admin' };
-    return next();
-  }
-
-  // 2. Accept JWT (issued by POST /api/auth/login or /api/auth/mfa/verify)
-  const payload = verifyJwt(token);
-  if (payload) {
-    req.benchUser = { username: payload.sub, role: payload.role };
-    return next();
-  }
-
-  return res.status(401).json({ error: 'Unauthorized', detail: 'Invalid or expired token' });
+  req.benchUser = user;
+  return next();
 }
 
-module.exports = { requireFormAuth, requireBearerAuth, verifyJwt, AUTH_SECRET };
+/** requireAuth plus a role check (403 for a logged-in user without the role). */
+function requireRole(role) {
+  return (req, res, next) => requireAuth(req, res, () => {
+    if (req.benchUser.role !== role) {
+      return res.status(403).json({ error: 'Forbidden', detail: `${role} role required` });
+    }
+    return next();
+  });
+}
+
+module.exports = { requireAuth, requireRole, identify, verifyJwt, AUTH_SECRET };

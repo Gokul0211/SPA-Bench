@@ -1,18 +1,3 @@
-/**
- * SPABench App B — mfe-inventory Webpack 5 Module Federation config
- *
- * This MFE runs on port 3011 and exposes InventoryModule.
- * EP-B-001: http://localhost:3011/remoteEntry.js
- *
- * TC-P1-011 / TC-P1-012:
- *   The shell fetches this remoteEntry.js at startup. When loaded, all modules
- *   in this bundle are registered into the shared __webpack_modules__ table.
- *   InventoryService (inventory.service.ts) becomes __webpack_modules__[847].
- *
- * TC-P3-003 (webpack_registry_unnavigated):
- *   Module 847 (InventoryService) is registered but the shell router has no
- *   '/inventory' route — the module is never called during navigation.
- */
 const { ModuleFederationPlugin } = require('webpack').container;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');

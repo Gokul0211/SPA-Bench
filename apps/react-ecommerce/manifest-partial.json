@@ -1,19 +1,32 @@
 {
-  "app_id": "react-ecommerce",
-  "framework": "React 18 + Vite (bearer-auth)",
-  "frontend_port": 3003,
-  "backend_port": 3003,
-  "auth_server_port": 4001,
-  "endpoint_count": 20,
+  "schema": "spabench-partial/3",
+  "app": {
+    "id": "react-ecommerce",
+    "name": "Shop",
+    "framework": "react",
+    "framework_version": "18 (emulated)",
+    "build_tool": "vite",
+    "port": 3003,
+    "origin": "http://localhost:3003",
+    "api_hosts": [
+      "localhost:3003",
+      "localhost:4001"
+    ],
+    "external_hosts": [],
+    "source_maps_exposed": true,
+    "auth_method": "bearer",
+    "description": "React storefront: public catalogue, account/orders after login, checkout chunk loaded on demand, recommendations fetched by a Web Worker, IndexedDB request cache."
+  },
   "endpoints": [
     {
       "id": "EP-C-001",
-      "url": "http://localhost:3003/api/v2/products/{id}",
       "method": "GET",
-      "phase": "2",
-      "technique": "template_literal_resolved",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/products/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": false,
+      "design_technique": "url_template_literal",
       "parameters": [
         {
           "name": "id",
@@ -28,26 +41,17 @@
           "required": false
         }
       ],
-      "source_file": "src/services/ProductService.tsx",
-      "minified_location": "assets/index.abc123.js:1:18200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-002",
-      "url": "http://localhost:3003/api/v2/products/list",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_concat_direct",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
+      "url": "http://localhost:3003/api/v2/products/list",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": false,
+      "design_technique": "url_concat_direct",
       "parameters": [
         {
           "name": "page",
@@ -68,24 +72,17 @@
           "required": false
         }
       ],
-      "source_file": "src/services/ProductService.tsx",
-      "minified_location": "assets/index.abc123.js:1:18500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-003",
-      "url": "http://localhost:3003/checkout/process",
       "method": "POST",
-      "phase": "2",
-      "technique": "lazy_chunk_import",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/checkout/process",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "lazy_loaded_chunk",
       "parameters": [
         {
           "name": "cartId",
@@ -106,45 +103,29 @@
           "required": true
         }
       ],
-      "source_file": "micro-apps/checkout-flow/services/CheckoutService.ts",
-      "minified_location": "assets/checkout.chunk.js:1:3200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-004",
-      "url": "http://localhost:3003/api/v2/recommendations",
       "method": "GET",
-      "phase": "3",
-      "technique": "service_worker_intercept",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "recommendation.worker.js",
-      "minified_location": "recommendation.worker.js:1:120",
-      "confidence_tier": "RUNTIME_VERIFIED",
+      "url": "http://localhost:3003/api/v2/recommendations",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "dynamic_worker_fetch",
+      "parameters": [],
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-005",
-      "url": "http://localhost:3003/api/v2/products",
       "method": "GET",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
+      "url": "http://localhost:3003/api/v2/products",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": false,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "search",
@@ -153,24 +134,17 @@
           "required": false
         }
       ],
-      "source_file": "src/services/ProductService.tsx",
-      "minified_location": "assets/index.abc123.js:1:19000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-006",
-      "url": "http://localhost:3003/api/v2/products",
       "method": "POST",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/products",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "name",
@@ -197,24 +171,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/ProductService.tsx",
-      "minified_location": "assets/index.abc123.js:1:19500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-007",
-      "url": "http://localhost:3003/api/v2/products/{id}",
       "method": "PUT",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/products/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -229,24 +196,17 @@
           "required": false
         }
       ],
-      "source_file": "src/services/ProductService.tsx",
-      "minified_location": "assets/index.abc123.js:1:20100",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-008",
-      "url": "http://localhost:3003/api/v2/products/{id}",
       "method": "DELETE",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/products/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -255,24 +215,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/ProductService.tsx",
-      "minified_location": "assets/index.abc123.js:1:20600",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-009",
-      "url": "http://localhost:3003/api/v2/orders",
       "method": "GET",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/orders",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "userId",
@@ -281,24 +234,17 @@
           "required": false
         }
       ],
-      "source_file": "src/services/OrderService.tsx",
-      "minified_location": "assets/index.abc123.js:1:21000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-010",
-      "url": "http://localhost:3003/api/v2/orders/{id}",
       "method": "GET",
-      "phase": "2",
-      "technique": "template_literal_resolved",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/orders/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "url_template_literal",
       "parameters": [
         {
           "name": "id",
@@ -307,24 +253,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/OrderService.tsx",
-      "minified_location": "assets/index.abc123.js:1:21500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-011",
-      "url": "http://localhost:3003/api/v2/orders",
       "method": "POST",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/orders",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "items",
@@ -339,24 +278,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/OrderService.tsx",
-      "minified_location": "assets/index.abc123.js:1:22000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-012",
-      "url": "http://localhost:3003/api/v2/orders/{id}/status",
       "method": "PATCH",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/orders/{id}/status",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -371,43 +303,29 @@
           "required": true
         }
       ],
-      "source_file": "src/services/OrderService.tsx",
-      "minified_location": "assets/index.abc123.js:1:22500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-013",
-      "url": "http://localhost:3003/api/v2/users/me",
       "method": "GET",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "src/services/UserService.tsx",
-      "minified_location": "assets/index.abc123.js:1:23000",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:3003/api/v2/users/me",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "fetch_interception",
+      "parameters": [],
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-014",
-      "url": "http://localhost:3003/api/v2/users/me",
       "method": "PUT",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/users/me",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "displayName",
@@ -422,24 +340,17 @@
           "required": false
         }
       ],
-      "source_file": "src/services/UserService.tsx",
-      "minified_location": "assets/index.abc123.js:1:23500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-015",
-      "url": "http://localhost:3003/api/v2/cart/{id}",
       "method": "DELETE",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/cart/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -448,24 +359,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/CartService.tsx",
-      "minified_location": "assets/checkout.chunk.js:1:4000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-016",
-      "url": "http://localhost:3003/api/v2/reviews",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_concat_direct",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/reviews",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": false,
+      "design_technique": "url_concat_direct",
       "parameters": [
         {
           "name": "productId",
@@ -474,24 +378,17 @@
           "required": true
         }
       ],
-      "source_file": "src/components/ProductCatalog.tsx",
-      "minified_location": "assets/index.abc123.js:1:24000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-017",
-      "url": "http://localhost:3003/api/v2/reviews",
       "method": "POST",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/reviews",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "productId",
@@ -512,45 +409,29 @@
           "required": false
         }
       ],
-      "source_file": "src/components/ProductCatalog.tsx",
-      "minified_location": "assets/index.abc123.js:1:24500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-C-018",
-      "url": "http://localhost:3003/api/v2/admin/products",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_array_assembly",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
-      "parameters": [],
-      "source_file": "src/services/AdminService.tsx",
-      "minified_location": "assets/index.abc123.js:1:25000",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:3003/api/v2/admin/products",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "url_array_assembly",
+      "parameters": [],
+      "security_finding_type": "admin_crud_endpoint"
     },
     {
       "id": "EP-C-019",
-      "url": "http://localhost:3003/api/v2/admin/products",
       "method": "POST",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/admin/products",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "name",
@@ -565,24 +446,17 @@
           "required": true
         }
       ],
-      "source_file": "src/services/AdminService.tsx",
-      "minified_location": "assets/index.abc123.js:1:25500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "admin_crud_endpoint"
     },
     {
       "id": "EP-C-020",
-      "url": "http://localhost:3003/api/v2/admin/products/{id}",
       "method": "DELETE",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3003/api/v2/admin/products/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -591,15 +465,48 @@
           "required": true
         }
       ],
-      "source_file": "src/services/AdminService.tsx",
-      "minified_location": "assets/index.abc123.js:1:26000",
-      "confidence_tier": "BACKEND_API",
+      "security_finding_type": "admin_crud_endpoint"
+    },
+    {
+      "id": "EP-C-S-001",
+      "method": "POST",
+      "url": "http://localhost:3003/api/auth/login",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": false,
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-C-S-002",
+      "method": "GET",
+      "url": "http://localhost:3003/api/v2/cart/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": ""
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "none"
+    }
+  ],
+  "assets": [
+    {
+      "id": "AS-C-001",
+      "url": "http://localhost:3003/assets/checkout.chunk.js",
+      "design_technique": "link_preload"
+    },
+    {
+      "id": "AS-C-002",
+      "url": "http://localhost:3003/recommendation.worker.js",
+      "design_technique": "web_worker_constructor"
     }
   ]
 }

@@ -1,47 +1,19 @@
-# SPABench App E — Next.js SaaS Dashboard
-# Serves pre-built .next/static/ output
-# Source maps EXPOSED (Vercel default — 41 maps) — TC-P1.5-001
-# TC-P1.5-007: dist/server.js.map accessible at /dist/server.js.map
-# Port 3005
-FROM nginx:1.25-alpine
-COPY .next/        /usr/share/nginx/html/.next/
-COPY dist/         /usr/share/nginx/html/dist/
-COPY <<'NGINX_CONF' /etc/nginx/conf.d/default.conf
-server {
-    listen       3005;
-    server_name  localhost;
+# SPABench nextjs-saas — exported Next.js client served by nginx.
+#
+# .next/ is checked in (hand-built, see README "Limitations"):
+#   .next/index.html  → /
+#   .next/static/**   → /_next/static/**   (chunks, build manifest, source maps)
+#   dist/**           → /dist/**           (server bundle + map, exposed by mistake)
+# API, GraphQL and WebSocket traffic is proxied same-origin (nginx/default.conf).
+# Published on host port 3005 (docker-compose maps 3005:80).
 
-    root /usr/share/nginx/html;
+FROM nginx:1.27-alpine
 
-    location /_next/static/ {
-        alias /usr/share/nginx/html/.next/static/;
-        add_header Access-Control-Allow-Origin "*";
-        location ~* \.js\.map$ {
-            add_header Access-Control-Allow-Origin "*";
-            add_header Cache-Control "no-store";
-        }
-    }
+COPY nginx/default.conf  /etc/nginx/conf.d/default.conf
+COPY .next/index.html    /usr/share/nginx/html/index.html
+COPY .next/static/       /usr/share/nginx/html/_next/static/
+COPY dist/               /usr/share/nginx/html/dist/
 
-    location /dist/ {
-        alias /usr/share/nginx/html/dist/;
-        add_header Access-Control-Allow-Origin "*";
-    }
-
-    location /health {
-        return 200 '{"status":"ok","app":"nextjs-saas","port":3005}';
-        add_header Content-Type application/json;
-    }
-
-    location / {
-        root /usr/share/nginx/html/.next;
-        try_files $uri $uri/ /index.html;
-        add_header Access-Control-Allow-Origin "*";
-    }
-
-    error_page 404 /index.html;
-}
-NGINX_CONF
-
-EXPOSE 3005
-HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget -qO- http://localhost:3005/health || exit 1
+EXPOSE 80
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=5 \
+    CMD wget -qO- http://127.0.0.1/health || exit 1

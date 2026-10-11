@@ -1,2 +1,1 @@
-var mfeAdmin;(()=>{"use strict";mfeAdmin={"AdminModule":()=>import("./main.js").then(m=>m.AdminModule),"LegacyReportService":()=>import("./main.js").then(m=>m.LegacyReportService)};})();
-//# sourceMappingURL=remoteEntry.js.map
+var mfeAdmin;(()=>{"use strict";var p=new URL("./",document.currentScript&&document.currentScript.src||location.href).href;mfeAdmin={"AdminModule":()=>import(p+"main.js").then(m=>m.AdminModule),"LegacyReportService":()=>import(p+"main.js").then(m=>m.LegacyReportService)};})();

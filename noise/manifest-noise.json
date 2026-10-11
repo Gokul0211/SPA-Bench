@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "Vendor noise patterns for SPABench false positive classification. evaluate.py cross-references tool output URLs against these patterns to compute Vendor Noise Rate.",
+  "description": "Vendor noise indicators. evaluate.py tags a false positive with the first indicator it matches: indicators containing '/' must match a whole run of path segments, bare words a whole segment, indicators with spaces or brackets the raw URL. Vendor Noise Rate = tagged false positives / all false positives.",
   "patterns": [
     {
       "id": "TC-NOISE-001",

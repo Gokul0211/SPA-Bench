@@ -11,21 +11,6 @@ export interface LegacyReport {
   data:       Record<string, unknown>[];
 }
 
-/**
- * LegacyReportService — mfe-admin
- *
- * TC-P3-003 (webpack_registry_unnavigated):
- *   This service is bundled into dist/mfe-admin/main.js alongside
- *   adminEnvironment.internalApiUrl = 'http://10.0.1.45:8080/internal/api'.
- *
- *   The mfe-admin remoteEntry.js is co-hosted at localhost:3002/mfe-admin/
- *   and is loaded by the shell federation runtime at startup. All of this
- *   module's code (including the internal URL) is registered in __webpack_modules__
- *   but never called — because the shell's AppRoutingModule has no '/admin' route.
- *
- *   A standard page crawler following navigation paths will never encounter
- *   this service. A tool that reads __webpack_modules__ entries finds it.
- */
 @Injectable({ providedIn: 'root' })
 export class LegacyReportService {
   // This value resolves to 'http://10.0.1.45:8080/internal/api' at bundle time

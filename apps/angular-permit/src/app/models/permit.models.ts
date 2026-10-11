@@ -1,39 +1,3 @@
-/**
- * SPABench App A — Angular Permit-to-Work SPA
- * src/app/models/permit.models.ts
- *
- * BENCHMARK RELEVANCE:
- * ────────────────────────────────────────────────────────────────────────────
- * These TypeScript interfaces are the source of EP-A-003's parameter recovery.
- *
- * TC-P2-018 (param_ts_interface, Phase 2):
- * A tool performing source map decompilation and TypeScript interface extraction
- * can recover all 5 fields of CreatePermitRequest and associate them with the
- * POST /api/rc_permit/createPermit endpoint. This is what "parameter mining
- * from TypeScript interface definition" means in the test case specification.
- *
- * The openapi-spec.json in rest-backend lists these exact 5 fields as the
- * CreatePermitRequest schema — the source TypeScript and the API spec agree.
- *
- * EP-A-003 parameters recovered:
- *   workSiteId   (body, string, required)
- *   startDate    (body, string/date, required)
- *   endDate      (body, string/date, required)
- *   hazardLevel  (body, enum LOW|MEDIUM|HIGH, required)
- *   supervisorId (body, string, required)
- *
- * TC-P2-019 (param_generic_type_annotation, Phase 2):
- * PermitService.createPermit() is typed as:
- *   this.api.post<PermitResponse>('createPermit', request: CreatePermitRequest)
- * Tools that extract generic type arguments see `CreatePermitRequest` and can
- * look it up in this file to enumerate all fields.
- */
-
-/**
- * Request body for POST /api/rc_permit/createPermit (EP-A-003).
- * All 5 fields are required — the REST backend validates each one and returns
- * 400 if any are missing.
- */
 export interface CreatePermitRequest {
   /** Unique identifier of the work site where permit is required */
   workSiteId: string;
@@ -74,10 +38,6 @@ export type PermitStatus =
   | 'CLOSED'
   | 'CANCELLED';
 
-/**
- * Response from GET /api/rc_permit/getPermitDetails (EP-A-004).
- * Includes the full conditions array — only available via source map recovery.
- */
 export interface PermitDetails extends PermitResponse {
   /** Safety conditions that must be met during the permit period */
   conditions: PermitCondition[];
@@ -100,10 +60,6 @@ export interface PermitHistoryEntry {
   notes?: string;
 }
 
-/**
- * Response from GET /api/rc_permit/getPermitType (EP-A-001).
- * Returns the list of permit type codes available for the current work site.
- */
 export interface PermitTypeListResponse {
   permitTypes: PermitTypeCode[];
 }
@@ -116,10 +72,6 @@ export type PermitTypeCode =
   | 'EXCAVATION'
   | 'RADIATION';
 
-/**
- * Request/response for GET /api/rc_permit/getWorkOrder (EP-A-002).
- * workOrderId is passed as a query parameter — required.
- */
 export interface WorkOrderResponse {
   workOrderId: string;
   title: string;
@@ -133,10 +85,6 @@ export interface WorkOrderResponse {
   updatedAt: string;
 }
 
-/**
- * Auth-related models — used by AuthService (EP-A-010).
- * FormGroup field names are recovered via TC-P2-022 (param_formgroup).
- */
 export interface LoginFormValue {
   username: string;
   password: string;

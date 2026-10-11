@@ -1,78 +1,22 @@
 'use strict';
 
 /**
- * SPABench SOAP Bridge — port 4004
+ * SPABench SOAP bridge (port 4004; vue-portal reaches it same-origin at
+ * /api/legacy/bridge through its nginx).
  *
- * Bridges the legacy LegacyHRService WSDL as REST POST endpoints for App D
- * (vue-portal). Serves the WSDL itself so the Vue portal can fetch and parse
- * it at request time — that runtime parse is what makes the three bridge
- * endpoints exclusively discoverable via dynamic interception.
- *
- * ── Why routes are NOT hardcoded ─────────────────────────────────────────────
- *
- * EP-D-002, EP-D-003, EP-D-004 are all:
- *   exclusive: true
- *   technique: soap_bridge_dynamic
- *   source_file: null
- *   minified_location: null
- *
- * This means the bridge paths (/api/legacy/bridge/getEmployeeRecord etc.)
- * must NEVER appear as string literals anywhere in a static-analysable source.
- * If they were hardcoded here, a tool that scans this server's source would
- * find them via string matching — invalidating the exclusive/dynamic claim.
- *
- * Instead, this server:
- *   1. Reads the WSDL file at startup (readFileSync)
- *   2. Parses it with xml2js to extract <operation name="..."> elements
- *   3. Registers Express routes for each operation name at runtime
- *
- * The vue-portal does the same thing server-side: it fetches
- * http://soap-bridge:4004/wsdl/legacy-service.wsdl, parses the portType
- * operations, and constructs the bridge POST URLs dynamically. That fetch and
- * parse is what Phase 3 dynamic interception captures — it is the only moment
- * these URLs exist in observable form.
- *
- * ── Endpoints ────────────────────────────────────────────────────────────────
+ * Exposes the LegacyHRService WSDL operations as REST POST endpoints. Routes are
+ * registered at startup from the WSDL portType, so the operation paths are data,
+ * not literals in this file.
  *
  *   GET  /health
- *     Docker health check. Returns { status, operations, uptime }.
+ *   GET  /wsdl/legacy-service.wsdl         the WSDL itself
+ *   GET  /api/legacy/bridge                JSON index of registered operations
+ *   POST /api/legacy/bridge/:operation     one per WSDL operation; requires
+ *        Authorization: Bearer <JWT from the REST backend's login> (or an
+ *        X-Session-Token header carrying the same JWT). XML SOAP envelope by
+ *        default, JSON with Accept: application/json.
  *
- *   GET  /wsdl/legacy-service.wsdl
- *     Serves the raw WSDL XML. The vue-portal fetches this at runtime.
- *     Also the starting point for any dynamic tool that intercepts XHR/Fetch.
- *
- *   GET  /api/legacy/bridge
- *     Bridge discovery index. Returns JSON listing all registered operations
- *     and the WSDL location. Useful for manual inspection and sanity_check.py.
- *
- *   POST /api/legacy/bridge/:operation    (routes registered at startup)
- *     One route per WSDL portType operation:
- *       getEmployeeRecord  (EP-D-002)
- *       updatePayroll      (EP-D-003)
- *       generateReport     (EP-D-004)
- *     Auth: form (JWT or express-session cookie).
- *     Accepts JSON body. Responds with XML SOAP envelope (legacy fidelity) AND
- *     a JSON shadow under the same path via content negotiation.
- *
- * ── Auth ─────────────────────────────────────────────────────────────────────
- *
- * App D uses form auth (auth_method: "form") — same as App A.
- * Accepts:
- *   1. Authorization: Bearer <jwt>         — issued by rest-backend /api/auth/login
- *   2. Cookie: connect.sid (express-session) — for browser-based flows
- * Static BENCH_BEARER_TOKEN NOT accepted here — App D uses form auth only.
- *
- * ── Response format ───────────────────────────────────────────────────────────
- *
- * Returns XML SOAP envelope by default (Content-Type: text/xml).
- * If Accept: application/json is present, returns JSON instead.
- * This matches the legacy bridge pattern: the SOAP service itself speaks XML,
- * but the bridge adapter can translate to JSON for modern clients.
- *
- * ── Environment variables ─────────────────────────────────────────────────────
- *
- *   PORT                4004
- *   BENCH_AUTH_SECRET   JWT signing secret
+ * Environment: PORT (4004), BENCH_AUTH_SECRET (shared JWT secret).
  */
 
 const express    = require('express');
@@ -83,14 +27,13 @@ const path       = require('path');
 const xml2js     = require('xml2js');
 
 const PORT        = parseInt(process.env.PORT || '4004', 10);
-const AUTH_SECRET = process.env.BENCH_AUTH_SECRET || 'spabench-dev-secret-do-not-use-in-production';
+const AUTH_SECRET = process.env.BENCH_AUTH_SECRET || 'dev-secret-do-not-use-in-production';
 
 const WSDL_PATH = path.join(__dirname, 'wsdl', 'legacy-service.wsdl');
 
 // ── Auth middleware ───────────────────────────────────────────────────────────
 /**
- * Form auth: accepts JWT from Authorization header or session cookie.
- * App D does NOT accept the static BENCH_BEARER_TOKEN — it uses form auth only.
+ * Accepts the REST backend's JWT, as a bearer header or an X-Session-Token header.
  */
 function requireFormAuth(req, res, next) {
   // 1. Bearer JWT in Authorization header
@@ -106,10 +49,7 @@ function requireFormAuth(req, res, next) {
     }
   }
 
-  // 2. Session cookie (express-session set by rest-backend /api/auth/login)
-  // In Docker, both servers share the same BENCH_AUTH_SECRET. The vue-portal
-  // server-side code attaches the session token as a custom header when
-  // proxying to the SOAP bridge.
+  // 2. The same JWT in X-Session-Token (both servers share BENCH_AUTH_SECRET).
   const sessionToken = req.headers['x-session-token'];
   if (sessionToken) {
     try {
@@ -123,7 +63,7 @@ function requireFormAuth(req, res, next) {
 
   return res.status(401).json({
     error:  'Unauthorized',
-    detail: 'App D uses form auth. Provide Authorization: Bearer <jwt> or X-Session-Token header.',
+    detail: 'Provide Authorization: Bearer <jwt> or an X-Session-Token header.',
   });
 }
 
@@ -137,7 +77,7 @@ function soapEnvelope(operationName, bodyContent) {
     <tns:BridgeMetadata>
       <tns:operation>${operationName}</tns:operation>
       <tns:processedAt>${new Date().toISOString()}</tns:processedAt>
-      <tns:bridgeVersion>spabench-soap-bridge/1.0</tns:bridgeVersion>
+      <tns:bridgeVersion>legacy-soap-bridge/1.0</tns:bridgeVersion>
     </tns:BridgeMetadata>
   </soap:Header>
   <soap:Body>
@@ -162,7 +102,7 @@ function sendResponse(req, res, operationName, xmlBody, jsonPayload) {
   res.send(soapEnvelope(operationName, xmlBody));
 }
 
-// ── Seed data — 40 synthetic government employees (matches rest-backend App D) ─
+// ── Seed data — 40 synthetic government employees (same records as the REST backend's /api/users) ─
 const EMPLOYEES = Array.from({ length: 40 }, (_, i) => {
   const n = i + 1;
   const depts = ['HR', 'Finance', 'Engineering', 'Operations', 'Legal', 'Compliance', 'IT', 'Procurement'];
@@ -273,7 +213,7 @@ async function main() {
   app.get('/health', (_req, res) => {
     res.json({
       status:     'ok',
-      service:    'spabench-soap-bridge',
+      service:    'legacy-soap-bridge',
       operations: Object.keys(HANDLERS),
       wsdl:       `/wsdl/legacy-service.wsdl`,
       uptime:     process.uptime(),
@@ -290,10 +230,7 @@ async function main() {
 
   // ── Parse WSDL → register bridge routes ──────────────────────────────────────
   //
-  // DESIGN INVARIANT: bridge route paths are constructed at runtime only.
-  // The string "/api/legacy/bridge/" + operationName is assembled here from
-  // data parsed out of the WSDL — it is never a string literal in this file.
-  // This preserves EP-D-002/003/004 as exclusively runtime-discoverable.
+  // Route paths are built from the WSDL's operation names at startup.
   //
   const wsdlXml     = fs.readFileSync(WSDL_PATH, 'utf8');
   const parsed      = await xml2js.parseStringPromise(wsdlXml, { explicitArray: true });
@@ -321,14 +258,13 @@ async function main() {
   const bridgeBase = '/api/legacy/bridge';
   app.get(bridgeBase, (_req, res) => {
     res.json({
-      description: 'SPABench SOAP bridge — REST adapter for LegacyHRService',
+      description: 'REST adapter for LegacyHRService',
       wsdl:        `http://localhost:${PORT}/wsdl/legacy-service.wsdl`,
       operations:  operations.map(name => ({
         name,
         method:   'POST',
         path:     `${bridgeBase}/${name}`,
         auth:     'form (Authorization: Bearer <jwt> or X-Session-Token header)',
-        security: 'legacy_attack_surface',
       })),
     });
   });

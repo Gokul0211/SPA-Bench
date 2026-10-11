@@ -1,2 +1,1 @@
-var mfeOrders;(()=>{"use strict";mfeOrders={"OrdersModule":()=>import("./main.js").then(m=>m.OrdersModule)};})();
-//# sourceMappingURL=remoteEntry.js.map
+var mfeOrders;(()=>{"use strict";var p=new URL("./",document.currentScript&&document.currentScript.src||location.href).href;mfeOrders={"OrdersModule":()=>import(p+"main.js").then(m=>m.OrdersModule)};})();

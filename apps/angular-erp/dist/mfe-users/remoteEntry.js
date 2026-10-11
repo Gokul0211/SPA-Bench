@@ -1,2 +1,1 @@
-var mfeUsers;(()=>{"use strict";mfeUsers={"UsersModule":()=>import("./main.js").then(m=>m.UsersModule)};})();
-//# sourceMappingURL=remoteEntry.js.map
+var mfeUsers;(()=>{"use strict";var p=new URL("./",document.currentScript&&document.currentScript.src||location.href).href;mfeUsers={"UsersModule":()=>import(p+"main.js").then(m=>m.UsersModule)};})();

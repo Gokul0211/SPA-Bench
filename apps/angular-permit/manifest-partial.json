@@ -1,41 +1,47 @@
 {
-  "app_id": "angular-permit",
-  "framework": "Angular 15 (Webpack, form-auth)",
-  "frontend_port": 3001,
-  "backend_port": 4001,
-  "auth_server_port": 4001,
-  "endpoint_count": 22,
+  "schema": "spabench-partial/3",
+  "app": {
+    "id": "angular-permit",
+    "name": "Permit-to-Work",
+    "framework": "angular",
+    "framework_version": "8 (emulated)",
+    "build_tool": "angular-cli-webpack",
+    "port": 3001,
+    "origin": "http://localhost:3001",
+    "api_hosts": [
+      "localhost:3001",
+      "localhost:4001"
+    ],
+    "external_hosts": [
+      "staging-api.rc-permit.internal",
+      "auth.rc-permit.internal"
+    ],
+    "source_maps_exposed": true,
+    "auth_method": "bearer",
+    "description": "Angular permit-to-work client; API on a separate origin; lazy admin/reports chunks; obfuscated string array; dev environment leaked through the bundle map."
+  },
   "endpoints": [
     {
       "id": "EP-A-001",
-      "url": "http://localhost:4001/api/rc_permit/getPermitType",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_concat_direct",
-      "exclusive": false,
-      "redundant_techniques": [
-        "ts_service_file_recovery",
-        "fetch_interception"
-      ],
-      "parameters": [],
-      "source_file": "src/app/services/permit.service.ts",
-      "minified_location": "bundle.js:1:84729",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:4001/api/rc_permit/getPermitType",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "url_concat_direct",
+      "parameters": [],
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-002",
-      "url": "http://localhost:4001/api/rc_permit/getWorkOrder",
       "method": "GET",
-      "phase": "2",
-      "technique": "inter_proc_constructor_multi",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:4001/api/rc_permit/getWorkOrder",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "inter_proc_constructor_multi",
       "parameters": [
         {
           "name": "workOrderId",
@@ -44,26 +50,24 @@
           "required": true
         }
       ],
-      "source_file": "src/app/services/permit.service.ts",
-      "minified_location": "bundle.js:1:91032",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
       "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Base URL flows through 3 files."
+      "notes": "Base URL flows through 3 files."
     },
     {
       "id": "EP-A-003",
-      "url": "http://localhost:4001/api/rc_permit/createPermit",
       "method": "POST",
-      "phase": "2",
-      "technique": "param_ts_interface",
-      "exclusive": false,
-      "redundant_techniques": [
-        "ts_service_file_recovery"
-      ],
+      "url": "http://localhost:4001/api/rc_permit/createPermit",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "design_technique": "param_ts_interface",
       "parameters": [
         {
           "name": "workSiteId",
@@ -96,24 +100,17 @@
           "required": true
         }
       ],
-      "source_file": "src/app/services/permit.service.ts",
-      "minified_location": "bundle.js:1:93710",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-004",
-      "url": "http://localhost:4001/api/rc_permit/getPermitDetails",
       "method": "GET",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:4001/api/rc_permit/getPermitDetails",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -122,123 +119,85 @@
           "required": true
         }
       ],
-      "source_file": "src/app/services/permit.service.ts",
-      "minified_location": "bundle.js:1:96200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-005",
-      "url": "https://staging-api.rc-permit.internal/v2",
       "method": "GET",
-      "phase": "1.5",
-      "technique": "environment_ts_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "src/environments/environment.staging.ts",
-      "minified_location": "bundle.js:1:12000",
-      "confidence_tier": "BACKEND_API",
+      "url": "https://staging-api.rc-permit.internal/v2/health",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "external",
       "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": true,
-      "security_finding_type": "INTERNAL_HOSTNAME",
-      "noise_source": false,
-      "discovery_notes": "Staging internal hostname leaked via source map."
+      "evidence_hint": {
+        "composed": [
+          "sourcemap"
+        ]
+      },
+      "design_technique": "environment_ts_recovery",
+      "parameters": [],
+      "security_finding_type": "staging_server_url",
+      "notes": "Staging base URL from the development environment file (present only in the bundle source map) joined with /health by AdminService."
     },
     {
       "id": "EP-A-006",
-      "url": "https://auth.rc-permit.internal/oauth/token",
       "method": "POST",
-      "phase": "1.5",
-      "technique": "environment_ts_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "src/environments/environment.staging.ts",
-      "minified_location": "bundle.js:1:12500",
-      "confidence_tier": "BACKEND_API",
+      "url": "https://auth.rc-permit.internal/oauth/token",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "external",
       "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": true,
-      "security_finding_type": "INTERNAL_HOSTNAME",
-      "noise_source": false,
-      "discovery_notes": "Internal OAuth endpoint leaked."
+      "design_technique": "environment_ts_recovery",
+      "parameters": [],
+      "security_finding_type": "oauth_token_endpoint",
+      "notes": "OAuth token endpoint from the development environment file (source map only), used by AuthService.refreshToken."
     },
     {
       "id": "EP-A-007",
-      "url": "http://localhost:4001/api/admin/legacy-reports",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_array_assembly",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
-      "parameters": [],
-      "source_file": "src/app/services/admin.service.ts",
-      "minified_location": "bundle.js:1:101000",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:4001/api/admin/legacy-reports",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": "URL assembled from array segments."
+      "design_technique": "url_array_assembly",
+      "parameters": [],
+      "security_finding_type": "admin_crud_endpoint",
+      "notes": "URL assembled from array segments."
     },
     {
       "id": "EP-A-008",
-      "url": "http://localhost:4001/api/v1/orders",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_conditional_feature_flag",
-      "exclusive": false,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "src/app/services/order.service.ts",
-      "minified_location": "bundle.js:1:105000",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:4001/api/v1/orders",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "url_conditional_feature_flag",
+      "parameters": [],
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-009",
-      "url": "http://localhost:4001/api/v2/orders",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_conditional_feature_flag",
-      "exclusive": false,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "src/app/services/order.service.ts",
-      "minified_location": "bundle.js:1:105200",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:4001/api/v2/orders",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "url_conditional_feature_flag",
+      "parameters": [],
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-010",
-      "url": "http://localhost:4001/api/auth/login",
       "method": "POST",
-      "phase": "2",
-      "technique": "auth_service_recovery",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
+      "url": "http://localhost:4001/api/auth/login",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": false,
+      "design_technique": "auth_service_recovery",
       "parameters": [
         {
           "name": "username",
@@ -253,26 +212,17 @@
           "required": true
         }
       ],
-      "source_file": "src/app/services/auth.service.ts",
-      "minified_location": "bundle.js:1:108000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": true,
-      "security_finding_type": "AUTH_ENDPOINT",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "auth_endpoint"
     },
     {
       "id": "EP-A-011",
-      "url": "http://localhost:4001/api/rc_permit/listPermits",
       "method": "GET",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [
-        "ts_service_file_recovery"
-      ],
+      "url": "http://localhost:4001/api/rc_permit/listPermits",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "status",
@@ -287,26 +237,18 @@
           "required": false
         }
       ],
-      "source_file": "src/app/services/permit.service.ts",
-      "minified_location": "bundle.js:1:87500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
       "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Only triggered via /permits route."
+      "notes": "Only triggered via /permits route."
     },
     {
       "id": "EP-A-012",
-      "url": "http://localhost:4001/api/rc_permit/updatePermit",
       "method": "PUT",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
+      "url": "http://localhost:4001/api/rc_permit/updatePermit",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -327,24 +269,17 @@
           "required": false
         }
       ],
-      "source_file": "src/app/services/permit.service.ts",
-      "minified_location": "bundle.js:1:94200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-013",
-      "url": "http://localhost:4001/api/rc_permit/cancelPermit",
       "method": "DELETE",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:4001/api/rc_permit/cancelPermit",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -353,24 +288,17 @@
           "required": true
         }
       ],
-      "source_file": "src/app/services/permit.service.ts",
-      "minified_location": "bundle.js:1:95100",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-014",
-      "url": "http://localhost:4001/api/rc_permit/approvePermit",
       "method": "PATCH",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:4001/api/rc_permit/approvePermit",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "id",
@@ -385,24 +313,17 @@
           "required": false
         }
       ],
-      "source_file": "src/app/services/permit.service.ts",
-      "minified_location": "bundle.js:1:95800",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-015",
-      "url": "http://localhost:4001/api/rc_permit/getAuditTrail",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_concat_direct",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:4001/api/rc_permit/getAuditTrail",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "url_concat_direct",
       "parameters": [
         {
           "name": "permitId",
@@ -417,24 +338,17 @@
           "required": false
         }
       ],
-      "source_file": "src/app/services/audit.service.ts",
-      "minified_location": "bundle.js:1:99000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-016",
-      "url": "http://localhost:4001/api/rc_permit/uploadAttachment",
       "method": "POST",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:4001/api/rc_permit/uploadAttachment",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "permitId",
@@ -449,45 +363,29 @@
           "required": true
         }
       ],
-      "source_file": "src/app/services/attachment.service.ts",
-      "minified_location": "bundle.js:1:97500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-017",
-      "url": "http://localhost:4001/api/admin/users",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_array_assembly",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
-      "parameters": [],
-      "source_file": "src/app/services/admin.service.ts",
-      "minified_location": "bundle.js:1:102000",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:4001/api/admin/users",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "url_array_assembly",
+      "parameters": [],
+      "security_finding_type": "admin_crud_endpoint"
     },
     {
       "id": "EP-A-018",
-      "url": "http://localhost:4001/api/admin/users",
       "method": "POST",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:4001/api/admin/users",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "username",
@@ -502,24 +400,17 @@
           "required": true
         }
       ],
-      "source_file": "src/app/services/admin.service.ts",
-      "minified_location": "bundle.js:1:102800",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "admin_crud_endpoint"
     },
     {
       "id": "EP-A-019",
-      "url": "http://localhost:4001/api/admin/users/{id}",
       "method": "DELETE",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:4001/api/admin/users/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -528,24 +419,17 @@
           "required": true
         }
       ],
-      "source_file": "src/app/services/admin.service.ts",
-      "minified_location": "bundle.js:1:103600",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "admin_crud_endpoint"
     },
     {
       "id": "EP-A-020",
-      "url": "http://localhost:4001/api/v2/permits/{id}/approvals",
       "method": "GET",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:4001/api/v2/permits/{id}/approvals",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -554,24 +438,17 @@
           "required": true
         }
       ],
-      "source_file": "src/app/services/approval.service.ts",
-      "minified_location": "bundle.js:1:98500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-021",
-      "url": "http://localhost:4001/api/v2/permits/search",
       "method": "GET",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:4001/api/v2/permits/search",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "q",
@@ -586,26 +463,17 @@
           "required": false
         }
       ],
-      "source_file": "src/app/components/permit-search.component.ts",
-      "minified_location": "bundle.js:1:88900",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-A-022",
-      "url": "http://localhost:4001/api/rc_permit/updateStatus",
       "method": "PATCH",
-      "phase": "2",
-      "technique": "url_concat_direct",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
+      "url": "http://localhost:4001/api/rc_permit/updateStatus",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "url_concat_direct",
       "parameters": [
         {
           "name": "id",
@@ -620,15 +488,1045 @@
           "required": true
         }
       ],
-      "source_file": "src/app/services/permit.service.ts",
-      "minified_location": "bundle.js:1:96000",
-      "confidence_tier": "BACKEND_API",
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-001",
+      "method": "GET",
+      "url": "http://localhost:3001/api/auth/me",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "form",
-      "security_relevant": false,
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-002",
+      "method": "GET",
+      "url": "http://localhost:3001/api/rc_permit/appConfig",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": false,
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-003",
+      "method": "POST",
+      "url": "http://localhost:3001/api/rc_permit/submitEmergencyStop",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "html_attr_formaction",
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-004",
+      "method": "GET",
+      "url": "http://localhost:4001/api/rc_permit/getPermitDetails/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
       "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "notes": "Path form used only by permit.service.ts (source map)."
+    },
+    {
+      "id": "EP-A-S-005",
+      "method": "GET",
+      "url": "http://localhost:4001/api/admin/dashboard-stats",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "sourcemap"
+        ]
+      },
+      "parameters": [],
+      "security_finding_type": "admin_crud_endpoint",
+      "notes": "Only in admin.service.ts (source map)."
+    },
+    {
+      "id": "EP-A-S-006",
+      "method": "GET",
+      "url": "http://localhost:4001/api/admin/permits",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "page",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "status",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "workSiteId",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "admin_crud_endpoint"
+    },
+    {
+      "id": "EP-A-S-007",
+      "method": "POST",
+      "url": "http://localhost:4001/api/admin/permits",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [],
+      "security_finding_type": "admin_crud_endpoint"
+    },
+    {
+      "id": "EP-A-S-008",
+      "method": "GET",
+      "url": "http://localhost:4001/api/admin/permits/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "admin_crud_endpoint"
+    },
+    {
+      "id": "EP-A-S-009",
+      "method": "PATCH",
+      "url": "http://localhost:4001/api/admin/permits/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "hazardLevel",
+          "location": "body",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "supervisorId",
+          "location": "body",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "endDate",
+          "location": "body",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "notes",
+          "location": "body",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "admin_crud_endpoint"
+    },
+    {
+      "id": "EP-A-S-010",
+      "method": "DELETE",
+      "url": "http://localhost:4001/api/admin/permits/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "admin_crud_endpoint"
+    },
+    {
+      "id": "EP-A-S-011",
+      "method": "PUT",
+      "url": "http://localhost:4001/api/admin/permits/{id}/status",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "admin_crud_endpoint"
+    },
+    {
+      "id": "EP-A-S-012",
+      "method": "GET",
+      "url": "http://localhost:4001/api/admin/hazards",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "page",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "limit",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "workSiteId",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "hazardType",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-013",
+      "method": "POST",
+      "url": "http://localhost:4001/api/admin/hazards",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-014",
+      "method": "GET",
+      "url": "http://localhost:4001/api/admin/hazards/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-015",
+      "method": "PATCH",
+      "url": "http://localhost:4001/api/admin/hazards/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-016",
+      "method": "DELETE",
+      "url": "http://localhost:4001/api/admin/hazards/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-017",
+      "method": "GET",
+      "url": "http://localhost:4001/api/admin/hazards/{id}/risk-matrix",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-018",
+      "method": "GET",
+      "url": "http://localhost:4001/api/admin/audit/log",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "page",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "from",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "to",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "entityType",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "action",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-019",
+      "method": "GET",
+      "url": "http://localhost:4001/api/admin/audit/log/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-020",
+      "method": "PUT",
+      "url": "http://localhost:4001/api/admin/audit/log/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-021",
+      "method": "OPTIONS",
+      "url": "http://localhost:4001/api/admin/audit/capabilities",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": false,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [],
+      "security_finding_type": "none",
+      "notes": "Preflight-style call; the server answers every OPTIONS request in its CORS layer, so no auth is enforced."
+    },
+    {
+      "id": "EP-A-S-022",
+      "method": "GET",
+      "url": "http://localhost:4001/api/admin/audit/export",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "format",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "from",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "to",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-023",
+      "method": "GET",
+      "url": "http://localhost:4001/api/admin/users/{id}/profile",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-024",
+      "method": "PATCH",
+      "url": "http://localhost:4001/api/admin/users/{id}/role",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "role",
+          "location": "body",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "admin_crud_endpoint"
+    },
+    {
+      "id": "EP-A-S-025",
+      "method": "GET",
+      "url": "https://staging-api.rc-permit.internal/v2/admin/users",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "external",
+      "auth_required": false,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [],
+      "security_finding_type": "staging_server_url"
+    },
+    {
+      "id": "EP-A-S-026",
+      "method": "GET",
+      "url": "https://staging-api.rc-permit.internal/v2/admin/users/{id}/profile",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "external",
+      "auth_required": false,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "staging_server_url"
+    },
+    {
+      "id": "EP-A-S-027",
+      "method": "GET",
+      "url": "http://localhost:4001/api/reports/generate/{type}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "type",
+          "location": "path",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "dateFrom",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "dateTo",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "format",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-028",
+      "method": "GET",
+      "url": "http://localhost:4001/api/reports/history",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "userId",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "role",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "dateFrom",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "dateTo",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-029",
+      "method": "GET",
+      "url": "http://localhost:4001/api/reports/templates",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-030",
+      "method": "POST",
+      "url": "http://localhost:4001/api/reports/schedule",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-031",
+      "method": "GET",
+      "url": "http://localhost:4001/api/reports/compliance-checks",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "page",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "workSiteId",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "result",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-032",
+      "method": "POST",
+      "url": "http://localhost:4001/api/reports/compliance-checks",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-033",
+      "method": "GET",
+      "url": "http://localhost:4001/api/reports/compliance-checks/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-034",
+      "method": "GET",
+      "url": "http://localhost:4001/api/reports/compliance-checks/summary",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "workSiteId",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-035",
+      "method": "GET",
+      "url": "http://localhost:4001/api/reports/export/{type}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "parameters": [
+        {
+          "name": "type",
+          "location": "path",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "reportId",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "includeAttachments",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-036",
+      "method": "GET",
+      "url": "http://localhost:4001/api/reports/export/status/{id}",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-A-S-037",
+      "method": "GET",
+      "url": "http://localhost:4001/api/mobile/v1/permits",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "workSiteId",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "status",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "legacy_attack_surface"
+    },
+    {
+      "id": "EP-A-S-038",
+      "method": "POST",
+      "url": "http://localhost:4001/api/mobile/v1/permits/quick-submit",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [],
+      "security_finding_type": "legacy_attack_surface"
+    },
+    {
+      "id": "EP-A-S-039",
+      "method": "GET",
+      "url": "http://localhost:4001/api/mobile/v1/work-orders",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "workSiteId",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "legacy_attack_surface"
+    },
+    {
+      "id": "EP-A-S-040",
+      "method": "POST",
+      "url": "http://localhost:4001/api/mobile/v1/location/checkin",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [],
+      "security_finding_type": "legacy_attack_surface"
+    },
+    {
+      "id": "EP-A-S-041",
+      "method": "GET",
+      "url": "http://localhost:4001/api/mobile/v1/offline-sync",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [
+        {
+          "name": "since",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "legacy_attack_surface"
+    }
+  ],
+  "assets": [
+    {
+      "id": "AS-A-001",
+      "url": "http://localhost:3001/admin-module.js",
+      "design_technique": "html_attr_onclick"
+    },
+    {
+      "id": "AS-A-002",
+      "url": "http://localhost:3001/reports-module.js",
+      "design_technique": "html_attr_ng_include"
+    },
+    {
+      "id": "AS-A-003",
+      "url": "http://localhost:3001/permit-mobile-legacy.js",
+      "design_technique": "commented_script"
     }
   ]
 }

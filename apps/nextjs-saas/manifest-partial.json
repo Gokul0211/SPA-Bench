@@ -1,360 +1,78 @@
 {
-  "app_id": "nextjs-saas",
-  "framework": "Next.js 14 (GraphQL + WS + REST)",
-  "frontend_port": 3005,
-  "backend_port": 3005,
-  "auth_server_port": 4001,
-  "endpoint_count": 28,
+  "schema": "spabench-partial/3",
+  "app": {
+    "id": "nextjs-saas",
+    "name": "SaaS Dashboard",
+    "framework": "nextjs",
+    "framework_version": "14 (emulated)",
+    "build_tool": "nextjs-compiler",
+    "port": 3005,
+    "origin": "http://localhost:3005",
+    "api_hosts": [
+      "localhost:3005",
+      "localhost:4001",
+      "localhost:4002",
+      "localhost:4003"
+    ],
+    "external_hosts": [],
+    "source_maps_exposed": true,
+    "auth_method": "totp",
+    "description": "Next.js dashboard: REST + GraphQL + WebSockets behind one origin, TOTP second factor, chunks referenced through the build manifest and runtime chunk map, server code leaked into client chunks."
+  },
   "endpoints": [
     {
       "id": "EP-E-001",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_query_resolver",
-      "exclusive": false,
-      "redundant_techniques": [
-        "sourcemap_ts_recovery"
-      ],
+      "method": "POST",
+      "url": "http://localhost:3005/graphql",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": false,
+      "design_technique": "graphql_endpoint_heuristic",
       "parameters": [
         {
-          "name": "userId",
-          "location": "graphql_arg",
-          "type": "ID!",
+          "name": "query",
+          "location": "body",
+          "type": "string",
           "required": true
         }
       ],
-      "source_file": "src/graphql/resolvers/user.resolver.ts",
-      "minified_location": ".next/static/chunks/user.resolver.js:1:240",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
       "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Query getUser."
-    },
-    {
-      "id": "EP-E-002",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_mutation_resolver",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [
-        {
-          "name": "input",
-          "location": "graphql_arg",
-          "type": "UpdateUserInput!",
-          "required": true
-        }
-      ],
-      "source_file": "src/graphql/resolvers/user.resolver.ts",
-      "minified_location": ".next/static/chunks/user.resolver.js:1:480",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Mutation updateUser."
-    },
-    {
-      "id": "EP-E-003",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_mutation_resolver",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [
-        {
-          "name": "id",
-          "location": "graphql_arg",
-          "type": "ID!",
-          "required": true
-        }
-      ],
-      "source_file": "src/graphql/resolvers/user.resolver.ts",
-      "minified_location": ".next/static/chunks/user.resolver.js:1:680",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Mutation deleteUser."
-    },
-    {
-      "id": "EP-E-004",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_query_resolver",
-      "exclusive": false,
-      "redundant_techniques": [
-        "sourcemap_ts_recovery"
-      ],
-      "parameters": [
-        {
-          "name": "id",
-          "location": "graphql_arg",
-          "type": "ID!",
-          "required": true
-        }
-      ],
-      "source_file": "src/graphql/resolvers/order.resolver.ts",
-      "minified_location": ".next/static/chunks/order.resolver.js:1:240",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Query getOrder."
-    },
-    {
-      "id": "EP-E-005",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_mutation_resolver",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [
-        {
-          "name": "input",
-          "location": "graphql_arg",
-          "type": "CreateOrderInput!",
-          "required": true
-        }
-      ],
-      "source_file": "src/graphql/resolvers/order.resolver.ts",
-      "minified_location": ".next/static/chunks/order.resolver.js:1:480",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Mutation createOrder."
-    },
-    {
-      "id": "EP-E-006",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_query_resolver",
-      "exclusive": false,
-      "redundant_techniques": [
-        "sourcemap_ts_recovery"
-      ],
-      "parameters": [
-        {
-          "name": "userId",
-          "location": "graphql_arg",
-          "type": "ID!",
-          "required": true
-        }
-      ],
-      "source_file": "src/graphql/resolvers/billing.resolver.ts",
-      "minified_location": ".next/static/chunks/billing.resolver.js:1:240",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Query getBillingInfo."
-    },
-    {
-      "id": "EP-E-007",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_mutation_resolver",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [
-        {
-          "name": "input",
-          "location": "graphql_arg",
-          "type": "UpdateBillingInput!",
-          "required": true
-        }
-      ],
-      "source_file": "src/graphql/resolvers/billing.resolver.ts",
-      "minified_location": ".next/static/chunks/billing.resolver.js:1:480",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Mutation updateBillingInfo."
-    },
-    {
-      "id": "EP-E-008",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_query_resolver",
-      "exclusive": false,
-      "redundant_techniques": [
-        "sourcemap_ts_recovery"
-      ],
-      "parameters": [],
-      "source_file": "src/graphql/resolvers/dashboard.resolver.ts",
-      "minified_location": ".next/static/chunks/dashboard.resolver.js:1:240",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Query getDashboardMetrics."
-    },
-    {
-      "id": "EP-E-009",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_subscription_resolver",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "src/graphql/resolvers/dashboard.resolver.ts",
-      "minified_location": ".next/static/chunks/dashboard.resolver.js:1:720",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Subscription onMetricsUpdate."
-    },
-    {
-      "id": "EP-E-010",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_mutation_resolver",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [
-        {
-          "name": "input",
-          "location": "graphql_arg",
-          "type": "AuditQueryInput!",
-          "required": true
-        }
-      ],
-      "source_file": "src/graphql/resolvers/audit.resolver.ts",
-      "minified_location": ".next/static/chunks/audit.resolver.js:1:240",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": "Mutation queryAuditLog \u2014 admin-only."
-    },
-    {
-      "id": "EP-E-011",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_mutation_resolver",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [
-        {
-          "name": "input",
-          "location": "graphql_arg",
-          "type": "CheckoutInput!",
-          "required": true
-        }
-      ],
-      "source_file": "src/graphql/resolvers/checkout.resolver.ts",
-      "minified_location": ".next/static/chunks/checkout.resolver.js:1:240",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Mutation processCheckout."
-    },
-    {
-      "id": "EP-E-012",
-      "url": "http://localhost:3005/api/graphql",
-      "method": "GRAPHQL",
-      "phase": "2",
-      "technique": "graphql_subscription_resolver",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "src/graphql/resolvers/team.resolver.ts",
-      "minified_location": ".next/static/chunks/team.resolver.js:1:480",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": "Subscription onTeamUpdate."
+      "notes": "GraphQL HTTP endpoint (GET without a query returns a short JSON description)."
     },
     {
       "id": "EP-E-013",
-      "url": "wss://localhost:3005/ws/live-dashboard",
       "method": "WS",
-      "phase": "2",
-      "technique": "websocket_constructor_scan",
-      "exclusive": true,
-      "redundant_techniques": [
-        "sourcemap_ts_recovery"
-      ],
-      "parameters": [],
-      "source_file": "src/services/DashboardService.ts",
-      "minified_location": ".next/static/chunks/main.js:1:1800",
-      "confidence_tier": "RUNTIME_VERIFIED",
+      "url": "ws://localhost:3005/ws/live-dashboard",
+      "kind": "websocket",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "websocket_static",
+      "parameters": [],
+      "security_finding_type": "websocket_realtime_surface"
     },
     {
       "id": "EP-E-014",
-      "url": "wss://localhost:3005/ws/notifications",
       "method": "WS",
-      "phase": "2",
-      "technique": "websocket_constructor_scan",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "src/services/NotificationService.ts",
-      "minified_location": ".next/static/chunks/main.js:1:2900",
-      "confidence_tier": "RUNTIME_VERIFIED",
+      "url": "ws://localhost:3005/ws/notifications",
+      "kind": "websocket",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "websocket_static",
+      "parameters": [],
+      "security_finding_type": "websocket_realtime_surface"
     },
     {
       "id": "EP-E-015",
-      "url": "http://localhost:3005/api/dashboard/metrics",
       "method": "GET",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [
-        "sourcemap_ts_recovery"
-      ],
+      "url": "http://localhost:3005/api/dashboard/metrics",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "period",
@@ -363,26 +81,17 @@
           "required": false
         }
       ],
-      "source_file": "src/services/DashboardService.ts",
-      "minified_location": ".next/static/chunks/main.js:1:1200",
-      "confidence_tier": "RUNTIME_VERIFIED",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-016",
-      "url": "http://localhost:3005/api/auth",
       "method": "POST",
-      "phase": "1",
-      "technique": "link_modulepreload",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
+      "url": "http://localhost:3005/api/auth/login",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": false,
+      "design_technique": "auth_totp_mfa",
       "parameters": [
         {
           "name": "username",
@@ -397,26 +106,18 @@
           "required": true
         }
       ],
-      "source_file": "src/pages/api/auth.ts",
-      "minified_location": ".next/static/chunks/api-auth.js:1:100",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": true,
-      "security_finding_type": "AUTH_ENDPOINT",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "auth_endpoint",
+      "notes": "Step 1 of the TOTP login (the old entry pointed at a bare /api/auth that no code calls)."
     },
     {
       "id": "EP-E-017",
-      "url": "http://localhost:3005/api/users",
       "method": "GET",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
+      "url": "http://localhost:3005/api/users",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "role",
@@ -425,24 +126,17 @@
           "required": false
         }
       ],
-      "source_file": "src/pages/api/users.ts",
-      "minified_location": ".next/static/chunks/api-users.js:1:100",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-018",
-      "url": "http://localhost:3005/api/users/{id}",
       "method": "GET",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3005/api/users/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -451,24 +145,17 @@
           "required": true
         }
       ],
-      "source_file": "src/pages/api/users.ts",
-      "minified_location": ".next/static/chunks/api-users.js:1:300",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-019",
-      "url": "http://localhost:3005/api/users",
       "method": "POST",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3005/api/users",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "name",
@@ -489,24 +176,17 @@
           "required": true
         }
       ],
-      "source_file": "src/pages/api/users.ts",
-      "minified_location": ".next/static/chunks/api-users.js:1:500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-020",
-      "url": "http://localhost:3005/api/users/{id}",
       "method": "PUT",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3005/api/users/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -521,24 +201,17 @@
           "required": false
         }
       ],
-      "source_file": "src/pages/api/users.ts",
-      "minified_location": ".next/static/chunks/api-users.js:1:700",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-021",
-      "url": "http://localhost:3005/api/users/{id}",
       "method": "DELETE",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3005/api/users/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -547,24 +220,17 @@
           "required": true
         }
       ],
-      "source_file": "src/pages/api/users.ts",
-      "minified_location": ".next/static/chunks/api-users.js:1:900",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-022",
-      "url": "http://localhost:3005/api/orders",
       "method": "GET",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:3005/api/orders",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "userId",
@@ -573,24 +239,17 @@
           "required": false
         }
       ],
-      "source_file": "src/pages/api/orders.ts",
-      "minified_location": ".next/static/chunks/api-dashboard.js:1:200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-023",
-      "url": "http://localhost:3005/api/orders/{id}",
       "method": "DELETE",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3005/api/orders/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -599,26 +258,17 @@
           "required": true
         }
       ],
-      "source_file": "src/pages/api/orders.ts",
-      "minified_location": ".next/static/chunks/api-dashboard.js:1:400",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-024",
-      "url": "http://localhost:3005/api/billing/invoices",
       "method": "GET",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
+      "url": "http://localhost:3005/api/billing/invoices",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "from",
@@ -627,24 +277,17 @@
           "required": false
         }
       ],
-      "source_file": "src/pages/api/billing.ts",
-      "minified_location": ".next/static/chunks/billing.js:1:100",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-025",
-      "url": "http://localhost:3005/api/billing/invoices",
       "method": "POST",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3005/api/billing/invoices",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "orderId",
@@ -653,24 +296,17 @@
           "required": true
         }
       ],
-      "source_file": "src/pages/api/billing.ts",
-      "minified_location": ".next/static/chunks/billing.js:1:300",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-026",
-      "url": "http://localhost:3005/api/billing/invoices/{id}",
       "method": "DELETE",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3005/api/billing/invoices/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -679,43 +315,29 @@
           "required": true
         }
       ],
-      "source_file": "src/pages/api/billing.ts",
-      "minified_location": ".next/static/chunks/billing.js:1:500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-027",
-      "url": "http://localhost:3005/api/team/members",
       "method": "GET",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": false,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "src/pages/api/team.ts",
-      "minified_location": ".next/static/chunks/team.resolver.js:1:100",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:3005/api/team/members",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "ts_service_file_recovery",
+      "parameters": [],
+      "security_finding_type": "none"
     },
     {
       "id": "EP-E-028",
-      "url": "http://localhost:3005/api/team/members",
       "method": "POST",
-      "phase": "2",
-      "technique": "sourcemap_ts_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3005/api/team/members",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "userId",
@@ -730,15 +352,520 @@
           "required": true
         }
       ],
-      "source_file": "src/pages/api/team.ts",
-      "minified_location": ".next/static/chunks/team.resolver.js:1:300",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-E-S-001",
+      "method": "POST",
+      "url": "http://localhost:3005/api/auth/mfa/verify",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": false,
+      "design_technique": "auth_totp_mfa",
+      "parameters": [
+        {
+          "name": "token",
+          "location": "body",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "sessionToken",
+          "location": "body",
+          "type": "string",
+          "required": false
+        }
+      ],
       "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "notes": "Step 2 of the TOTP login."
+    },
+    {
+      "id": "EP-E-GQL-001",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#getUser",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_query_resolver",
+      "parameters": [
+        {
+          "name": "id",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none",
+      "notes": "Query getUser.",
+      "graphql": {
+        "operation_type": "query",
+        "operation": "getUser"
+      }
+    },
+    {
+      "id": "EP-E-GQL-002",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#listOrders",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_query_resolver",
+      "parameters": [
+        {
+          "name": "userId",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "status",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "limit",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none",
+      "notes": "Query listOrders.",
+      "graphql": {
+        "operation_type": "query",
+        "operation": "listOrders"
+      }
+    },
+    {
+      "id": "EP-E-GQL-003",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#getProduct",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": false,
+      "design_technique": "graphql_query_resolver",
+      "parameters": [
+        {
+          "name": "id",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "includeReviews",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none",
+      "notes": "Query getProduct.",
+      "graphql": {
+        "operation_type": "query",
+        "operation": "getProduct"
+      }
+    },
+    {
+      "id": "EP-E-GQL-004",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#searchProducts",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": false,
+      "design_technique": "graphql_query_resolver",
+      "parameters": [
+        {
+          "name": "query",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "filters",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none",
+      "notes": "Query searchProducts.",
+      "graphql": {
+        "operation_type": "query",
+        "operation": "searchProducts"
+      }
+    },
+    {
+      "id": "EP-E-GQL-005",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#getDashboardMetrics",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_query_resolver",
+      "parameters": [
+        {
+          "name": "period",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "granularity",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none",
+      "notes": "Query getDashboardMetrics.",
+      "graphql": {
+        "operation_type": "query",
+        "operation": "getDashboardMetrics"
+      }
+    },
+    {
+      "id": "EP-E-GQL-006",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#getAuditLog",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_query_resolver",
+      "parameters": [
+        {
+          "name": "resourceId",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "from",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "to",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "admin_crud_endpoint",
+      "notes": "Query getAuditLog.",
+      "graphql": {
+        "operation_type": "query",
+        "operation": "getAuditLog"
+      }
+    },
+    {
+      "id": "EP-E-GQL-007",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#listTeamMembers",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_query_resolver",
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "role",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none",
+      "notes": "Query listTeamMembers.",
+      "graphql": {
+        "operation_type": "query",
+        "operation": "listTeamMembers"
+      }
+    },
+    {
+      "id": "EP-E-GQL-008",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#getBillingInfo",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_query_resolver",
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none",
+      "notes": "Query getBillingInfo.",
+      "graphql": {
+        "operation_type": "query",
+        "operation": "getBillingInfo"
+      }
+    },
+    {
+      "id": "EP-E-GQL-009",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#createUser",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_mutation_resolver",
+      "parameters": [
+        {
+          "name": "input",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "admin_crud_endpoint",
+      "notes": "Mutation createUser.",
+      "graphql": {
+        "operation_type": "mutation",
+        "operation": "createUser"
+      }
+    },
+    {
+      "id": "EP-E-GQL-010",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#updateOrder",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_mutation_resolver",
+      "parameters": [
+        {
+          "name": "id",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "input",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none",
+      "notes": "Mutation updateOrder.",
+      "graphql": {
+        "operation_type": "mutation",
+        "operation": "updateOrder"
+      }
+    },
+    {
+      "id": "EP-E-GQL-011",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#deleteProduct",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_mutation_resolver",
+      "parameters": [
+        {
+          "name": "id",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "admin_crud_endpoint",
+      "notes": "Mutation deleteProduct.",
+      "graphql": {
+        "operation_type": "mutation",
+        "operation": "deleteProduct"
+      }
+    },
+    {
+      "id": "EP-E-GQL-012",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#processCheckout",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_mutation_resolver",
+      "parameters": [
+        {
+          "name": "cartId",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "paymentMethod",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none",
+      "notes": "Mutation processCheckout.",
+      "graphql": {
+        "operation_type": "mutation",
+        "operation": "processCheckout"
+      }
+    },
+    {
+      "id": "EP-E-GQL-013",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#inviteTeamMember",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_mutation_resolver",
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "email",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "role",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none",
+      "notes": "Mutation inviteTeamMember.",
+      "graphql": {
+        "operation_type": "mutation",
+        "operation": "inviteTeamMember"
+      }
+    },
+    {
+      "id": "EP-E-GQL-014",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#updateBilling",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_mutation_resolver",
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "plan",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none",
+      "notes": "Mutation updateBilling.",
+      "graphql": {
+        "operation_type": "mutation",
+        "operation": "updateBilling"
+      }
+    },
+    {
+      "id": "EP-E-GQL-015",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#orderStatusChanged",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_subscription_resolver",
+      "parameters": [
+        {
+          "name": "orderId",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "websocket_realtime_surface",
+      "notes": "Subscription orderStatusChanged.",
+      "graphql": {
+        "operation_type": "subscription",
+        "operation": "orderStatusChanged"
+      }
+    },
+    {
+      "id": "EP-E-GQL-016",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#dashboardMetricsUpdated",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_subscription_resolver",
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "websocket_realtime_surface",
+      "notes": "Subscription dashboardMetricsUpdated.",
+      "graphql": {
+        "operation_type": "subscription",
+        "operation": "dashboardMetricsUpdated"
+      }
+    },
+    {
+      "id": "EP-E-GQL-017",
+      "method": "GRAPHQL",
+      "url": "http://localhost:3005/graphql#teamActivityFeed",
+      "kind": "graphql",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "graphql_subscription_resolver",
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "location": "graphql_arg",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "websocket_realtime_surface",
+      "notes": "Subscription teamActivityFeed.",
+      "graphql": {
+        "operation_type": "subscription",
+        "operation": "teamActivityFeed"
+      }
     }
-  ]
+  ],
+  "assets": []
 }

@@ -1,95 +1,105 @@
 {
-  "app_id": "angular-erp",
-  "framework": "Angular 16 Module Federation (MFE)",
-  "frontend_port": 3002,
-  "backend_port": 3002,
-  "auth_server_port": 4001,
-  "endpoint_count": 20,
+  "schema": "spabench-partial/3",
+  "app": {
+    "id": "angular-erp",
+    "name": "ERP (Module Federation)",
+    "framework": "angular",
+    "framework_version": "17 (emulated)",
+    "build_tool": "webpack5-module-federation",
+    "port": 3002,
+    "origin": "http://localhost:3002",
+    "api_hosts": [
+      "localhost:3002",
+      "localhost:4001",
+      "localhost:3011",
+      "localhost:3012",
+      "localhost:3013",
+      "localhost:3014",
+      "localhost:3015",
+      "localhost:3016",
+      "localhost:3017",
+      "localhost:3018"
+    ],
+    "external_hosts": [
+      "10.0.1.45:8080"
+    ],
+    "source_maps_exposed": true,
+    "auth_method": "bearer",
+    "description": "Module Federation shell with 9 remotes loaded on navigation; background-sync Web Worker; Spring-style actuator on the API."
+  },
   "endpoints": [
     {
-      "id": "EP-B-001",
-      "url": "http://localhost:3012/remoteEntry.js",
-      "method": "GET",
-      "phase": "1",
-      "technique": "module_federation_remote_entry",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "apps/angular-erp/shell/webpack.config.js",
-      "minified_location": "shell/main.js:1:1420",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
-    },
-    {
-      "id": "EP-B-002",
-      "url": "http://localhost:3013/remoteEntry.js",
-      "method": "GET",
-      "phase": "1",
-      "technique": "module_federation_remote_entry",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "apps/angular-erp/shell/webpack.config.js",
-      "minified_location": "shell/main.js:1:1520",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
-    },
-    {
       "id": "EP-B-003",
-      "url": "http://localhost:3002/api/inventory/items",
       "method": "GET",
-      "phase": "2",
-      "technique": "webpack_registry_unnavigated",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
-      "minified_location": "mfe-inventory/main.js:1:2100",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:3002/api/inventory/items",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "webpack_registry_unnavigated",
+      "parameters": [
+        {
+          "name": "$filter",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "$top",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "$skip",
+          "location": "query",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "$orderby",
+          "location": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-004",
-      "url": "http://10.0.1.45:8080/internal/api/reports/annual",
       "method": "GET",
-      "phase": "2",
-      "technique": "internal_ip_hardcoded",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "apps/angular-erp/mfe-admin/src/app/services/legacy-report.service.ts",
-      "minified_location": "mfe-admin/main.js:1:890",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": true,
-      "security_finding_type": "INTERNAL_IP",
-      "noise_source": false,
-      "discovery_notes": ""
+      "url": "http://10.0.1.45:8080/internal/api/reports/{type}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "external",
+      "auth_required": false,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "design_technique": "url_variable_based",
+      "parameters": [
+        {
+          "name": "type",
+          "location": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "security_finding_type": "internal_ip_address",
+      "notes": "Private-network base URL in the admin remote, joined with /reports/{type}."
     },
     {
       "id": "EP-B-005",
-      "url": "http://localhost:3002/api/auth/login",
       "method": "POST",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:3002/api/auth/login",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": false,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "username",
@@ -104,45 +114,30 @@
           "required": true
         }
       ],
-      "source_file": "apps/angular-erp/shell/src/app/services/auth.service.ts",
-      "minified_location": "shell/main.js:1:1800",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": true,
-      "security_finding_type": "AUTH_ENDPOINT",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "auth_endpoint"
     },
     {
       "id": "EP-B-006",
-      "url": "http://localhost:3002/actuator/mappings",
       "method": "GET",
-      "phase": "1",
-      "technique": "spring_actuator_probe",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": null,
-      "minified_location": null,
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:3002/actuator/mappings",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "probe",
       "auth_required": false,
-      "auth_method": "none",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "spring_actuator_mappings",
+      "parameters": [],
+      "security_finding_type": "management_endpoint_exposure",
+      "notes": "Not referenced by any client code; found only by probing well-known paths."
     },
     {
       "id": "EP-B-007",
-      "url": "http://localhost:3002/api/inventory/items/{id}",
       "method": "GET",
-      "phase": "2",
-      "technique": "webpack_registry_unnavigated",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
+      "url": "http://localhost:3002/api/inventory/items/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "webpack_registry_unnavigated",
       "parameters": [
         {
           "name": "id",
@@ -151,24 +146,17 @@
           "required": true
         }
       ],
-      "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
-      "minified_location": "mfe-inventory/main.js:1:2300",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-008",
-      "url": "http://localhost:3002/api/inventory/items",
       "method": "POST",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:3002/api/inventory/items",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "name",
@@ -195,24 +183,17 @@
           "required": true
         }
       ],
-      "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
-      "minified_location": "mfe-inventory/main.js:1:2500",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-009",
-      "url": "http://localhost:3002/api/inventory/items/{id}",
       "method": "PUT",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3002/api/inventory/items/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -227,24 +208,17 @@
           "required": false
         }
       ],
-      "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
-      "minified_location": "mfe-inventory/main.js:1:2700",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-010",
-      "url": "http://localhost:3002/api/inventory/items/{id}",
       "method": "DELETE",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3002/api/inventory/items/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -253,45 +227,29 @@
           "required": true
         }
       ],
-      "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
-      "minified_location": "mfe-inventory/main.js:1:2900",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-011",
-      "url": "http://localhost:3002/api/inventory/categories",
       "method": "GET",
-      "phase": "2",
-      "technique": "url_concat_direct",
-      "exclusive": false,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "apps/angular-erp/mfe-inventory/src/app/services/inventory.service.ts",
-      "minified_location": "mfe-inventory/main.js:1:3100",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:3002/api/inventory/categories",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "url_concat_direct",
+      "parameters": [],
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-012",
-      "url": "http://localhost:3002/api/employees",
       "method": "GET",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": false,
-      "redundant_techniques": [
-        "fetch_interception"
-      ],
+      "url": "http://localhost:3002/api/employees",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "department",
@@ -300,24 +258,17 @@
           "required": false
         }
       ],
-      "source_file": "apps/angular-erp/mfe-admin/src/app/services/employee.service.ts",
-      "minified_location": "mfe-admin/main.js:1:1200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-013",
-      "url": "http://localhost:3002/api/employees/{id}",
       "method": "GET",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3002/api/employees/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -326,24 +277,17 @@
           "required": true
         }
       ],
-      "source_file": "apps/angular-erp/mfe-admin/src/app/services/employee.service.ts",
-      "minified_location": "mfe-admin/main.js:1:1400",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-014",
-      "url": "http://localhost:3002/api/employees",
       "method": "POST",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3002/api/employees",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "name",
@@ -364,24 +308,17 @@
           "required": true
         }
       ],
-      "source_file": "apps/angular-erp/mfe-admin/src/app/services/employee.service.ts",
-      "minified_location": "mfe-admin/main.js:1:1600",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-015",
-      "url": "http://localhost:3002/api/employees/{id}",
       "method": "PUT",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3002/api/employees/{id}",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "id",
@@ -396,24 +333,17 @@
           "required": false
         }
       ],
-      "source_file": "apps/angular-erp/mfe-admin/src/app/services/employee.service.ts",
-      "minified_location": "mfe-admin/main.js:1:1800",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-016",
-      "url": "http://localhost:3002/api/admin/users/{id}/role",
       "method": "PATCH",
-      "phase": "2",
-      "technique": "url_array_assembly",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3002/api/admin/users/{id}/role",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "url_array_assembly",
       "parameters": [
         {
           "name": "id",
@@ -428,24 +358,17 @@
           "required": true
         }
       ],
-      "source_file": "apps/angular-erp/mfe-admin/src/app/services/admin.service.ts",
-      "minified_location": "mfe-admin/main.js:1:2000",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "admin_crud_endpoint"
     },
     {
       "id": "EP-B-017",
-      "url": "http://localhost:3002/api/reports/monthly",
       "method": "GET",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:3002/api/reports/monthly",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "month",
@@ -454,24 +377,17 @@
           "required": true
         }
       ],
-      "source_file": "apps/angular-erp/mfe-admin/src/app/services/report.service.ts",
-      "minified_location": "mfe-admin/main.js:1:2200",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-018",
-      "url": "http://localhost:3002/api/reports/generate",
       "method": "POST",
-      "phase": "3",
-      "technique": "fetch_interception",
-      "exclusive": false,
-      "redundant_techniques": [],
+      "url": "http://localhost:3002/api/reports/generate",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "fetch_interception",
       "parameters": [
         {
           "name": "type",
@@ -486,43 +402,29 @@
           "required": true
         }
       ],
-      "source_file": "apps/angular-erp/mfe-admin/src/app/services/report.service.ts",
-      "minified_location": "mfe-admin/main.js:1:2400",
-      "confidence_tier": "BACKEND_API",
-      "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": false,
-      "security_finding_type": "none",
-      "noise_source": false,
-      "discovery_notes": ""
+      "security_finding_type": "none"
     },
     {
       "id": "EP-B-019",
-      "url": "http://localhost:3002/api/admin/settings",
       "method": "GET",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
-      "parameters": [],
-      "source_file": "apps/angular-erp/mfe-admin/src/app/services/admin.service.ts",
-      "minified_location": "mfe-admin/main.js:1:2600",
-      "confidence_tier": "BACKEND_API",
+      "url": "http://localhost:3002/api/admin/settings",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "ts_service_file_recovery",
+      "parameters": [],
+      "security_finding_type": "admin_crud_endpoint"
     },
     {
       "id": "EP-B-020",
-      "url": "http://localhost:3002/api/admin/settings",
       "method": "PUT",
-      "phase": "2",
-      "technique": "ts_service_file_recovery",
-      "exclusive": true,
-      "redundant_techniques": [],
+      "url": "http://localhost:3002/api/admin/settings",
+      "kind": "rest",
+      "test_case": true,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "ts_service_file_recovery",
       "parameters": [
         {
           "name": "smtpHost",
@@ -537,15 +439,177 @@
           "required": false
         }
       ],
-      "source_file": "apps/angular-erp/mfe-admin/src/app/services/admin.service.ts",
-      "minified_location": "mfe-admin/main.js:1:2800",
-      "confidence_tier": "BACKEND_API",
+      "security_finding_type": "admin_crud_endpoint"
+    },
+    {
+      "id": "EP-B-S-001",
+      "method": "POST",
+      "url": "http://10.0.1.45:8080/internal/api/admin/submit",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "external",
+      "auth_required": false,
+      "evidence_hint": {
+        "composed": [
+          "bundle",
+          "sourcemap"
+        ]
+      },
+      "parameters": [],
+      "security_finding_type": "internal_ip_address"
+    },
+    {
+      "id": "EP-B-S-002",
+      "method": "GET",
+      "url": "http://localhost:3002/api/sync/status",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
       "auth_required": true,
-      "auth_method": "bearer",
-      "security_relevant": true,
-      "security_finding_type": "ADMIN_PANEL",
-      "noise_source": false,
-      "discovery_notes": ""
+      "design_technique": "web_worker_constructor",
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-B-S-003",
+      "method": "POST",
+      "url": "http://localhost:3002/api/sync/retry-queue",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "design_technique": "web_worker_constructor",
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-B-S-004",
+      "method": "GET",
+      "url": "http://localhost:3002/api/v2/orders",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-B-S-005",
+      "method": "GET",
+      "url": "http://localhost:3002/api/v2/users",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-B-S-006",
+      "method": "GET",
+      "url": "http://localhost:3002/api/v2/finance/summary",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-B-S-007",
+      "method": "GET",
+      "url": "http://localhost:3002/api/v2/hr/employees",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-B-S-008",
+      "method": "GET",
+      "url": "http://localhost:3002/api/v2/crm/contacts",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-B-S-009",
+      "method": "GET",
+      "url": "http://localhost:3002/api/v2/analytics/metrics",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "parameters": [],
+      "security_finding_type": "none"
+    },
+    {
+      "id": "EP-B-S-010",
+      "method": "GET",
+      "url": "http://localhost:3002/api/v2/reports",
+      "kind": "rest",
+      "test_case": false,
+      "reachability": "served",
+      "auth_required": true,
+      "parameters": [],
+      "security_finding_type": "none"
+    }
+  ],
+  "assets": [
+    {
+      "id": "AS-B-001",
+      "url": "http://localhost:3011/remoteEntry.js",
+      "design_technique": "module_federation_remote_entry"
+    },
+    {
+      "id": "AS-B-002",
+      "url": "http://localhost:3012/remoteEntry.js",
+      "design_technique": "module_federation_remote_entry"
+    },
+    {
+      "id": "AS-B-003",
+      "url": "http://localhost:3013/remoteEntry.js",
+      "design_technique": "module_federation_remote_entry"
+    },
+    {
+      "id": "AS-B-004",
+      "url": "http://localhost:3014/remoteEntry.js",
+      "design_technique": "module_federation_remote_entry"
+    },
+    {
+      "id": "AS-B-005",
+      "url": "http://localhost:3015/remoteEntry.js",
+      "design_technique": "module_federation_remote_entry"
+    },
+    {
+      "id": "AS-B-006",
+      "url": "http://localhost:3016/remoteEntry.js",
+      "design_technique": "module_federation_remote_entry"
+    },
+    {
+      "id": "AS-B-007",
+      "url": "http://localhost:3017/remoteEntry.js",
+      "design_technique": "module_federation_remote_entry"
+    },
+    {
+      "id": "AS-B-008",
+      "url": "http://localhost:3018/remoteEntry.js",
+      "design_technique": "module_federation_remote_entry"
+    },
+    {
+      "id": "AS-B-009",
+      "url": "http://localhost:3002/mfe-admin/remoteEntry.js",
+      "design_technique": "module_federation_remote_entry"
+    },
+    {
+      "id": "AS-B-010",
+      "url": "http://localhost:3002/background-sync.worker.js",
+      "design_technique": "web_worker_constructor"
     }
   ]
 }
