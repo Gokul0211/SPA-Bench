@@ -252,4 +252,4 @@ backend, add the row to `apps/<app>/manifest-partial.json`, then run `scripts/sy
 
 ## License
 
-The README of v2.0 declared the MIT License; a `LICENSE` file still has to be added.
+MIT License; see the [`LICENSE`](LICENSE) file.

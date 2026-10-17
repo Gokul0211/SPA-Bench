@@ -1,0 +1,23 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  offline-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Install
+        run: pip install jsonschema
+      - name: Generated files are up to date
+        run: |
+          python build_manifest.py --check
+          python make_docs.py --check
+          python scripts/sync_sourcemaps.py --check
+      - name: Manifest validates
+        run: python validate_manifest.py
+      - name: Offline audit, unit tests, offline sanity
+        run: |
+          python audit/bench_audit.py all
+          python -m unittest discover -s tests
+          python sanity_check.py --offline
