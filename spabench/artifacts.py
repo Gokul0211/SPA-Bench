@@ -42,6 +42,30 @@ def rp(*parts):
     return os.path.join(ROOT, *parts)
 
 
+def _apply_variant(app, out):
+    """Serve a degraded variant of the app (see variants/make_variants.py).
+
+    $SPABENCH_VARIANT_DIR/<app>/variant.json = {"name": ..., "drop_maps": bool}; a variant file for URL
+    http://host:port/some/path.js lives at <app>/<host_port>/some/path.js. Files without a variant copy are
+    served unchanged. Without the environment variable nothing changes.
+    """
+    vroot = os.environ.get('SPABENCH_VARIANT_DIR')
+    vdir = os.path.join(vroot, app) if vroot else None
+    if not vdir or not os.path.isfile(os.path.join(vdir, 'variant.json')):
+        return out
+    with open(os.path.join(vdir, 'variant.json'), encoding='utf-8') as f:
+        meta = json.load(f)
+    from urllib.parse import urlsplit
+    res = []
+    for url, path in out:
+        if meta.get('drop_maps') and path.endswith('.map'):
+            continue
+        parts = urlsplit(url)
+        cand = os.path.join(vdir, parts.netloc.replace(':', '_'), parts.path.lstrip('/'))
+        res.append((url, cand if parts.path and not parts.path.endswith('/') and os.path.isfile(cand) else path))
+    return res
+
+
 def served_files(app):
     """[(url, repo_path)] for every file the app's web server returns with 200."""
     out = []
@@ -60,7 +84,7 @@ def served_files(app):
                     out.append((origin + prefix + rel, p))
     # a directory URL serves its index.html
     out += [(url[:-len('index.html')], p) for url, p in out if url.endswith('/index.html')]
-    return out
+    return _apply_variant(app, out)
 
 
 def url_to_file(app, url):

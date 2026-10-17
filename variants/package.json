@@ -1,0 +1,9 @@
+{
+  "name": "spabench-variants",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Builds degraded variants of the SPABench bundles (obfuscation levels). Run: npm ci",
+  "dependencies": {
+    "javascript-obfuscator": "5.9.0"
+  }
+}

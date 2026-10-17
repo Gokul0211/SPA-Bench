@@ -73,8 +73,12 @@ def load_spabench(path):
     for e in d.get('endpoints', []) if isinstance(d, dict) else d:
         url = e.get('url') or e.get('endpoint') or ''
         if url:
+            params = e.get('parameters')
             out.append({'url': url, 'method': (e.get('method') or '').upper() or None,
-                        'score': e.get('confidence_score', e.get('score'))})
+                        'score': e.get('confidence_score', e.get('score')),
+                        'auth_required': e.get('auth_required'),
+                        'parameters': sorted({p if isinstance(p, str) else p.get('name') for p in params} - {None})
+                        if isinstance(params, list) else None})
     return out
 
 
@@ -295,7 +299,12 @@ def evaluate_app(app, findings, oracle=None, method_aware=False):
         hc = app.host_class(host)
         key = ('graphql', frag) if (frag and path.endswith('/graphql')) else (hc or host, template_key(path))
         rec = endpoint_keys.setdefault(key, {'units': set(), 'methods': set(), 'scope': hc is not None,
-                                             'raw': f['url'], 'host': host, 'path': path, 'frag': frag})
+                                             'raw': f['url'], 'host': host, 'path': path, 'frag': frag,
+                                             'auth': [], 'params': None})
+        if f.get('auth_required') is not None:
+            rec['auth'].append(bool(f['auth_required']))
+        if f.get('parameters') is not None:
+            rec['params'] = (rec['params'] or set()) | set(f['parameters'])
         rec['units'] |= set(app.match_units(host, path, frag))
         if f.get('method'):
             rec['methods'].add(f['method'])
@@ -339,6 +348,33 @@ def evaluate_app(app, findings, oracle=None, method_aware=False):
                     found_m |= hit
         method_level = prf(tp_pred, n_pred, len(found_m), len(gt_m))
 
+    # auth_required accuracy: only findings that state a value, only matched units
+    auth_gt = {u: any(e['auth_required'] for e in es) for u, es in app.units.items()}
+    auth_ok = auth_n = 0
+    for r in matched:
+        if not r['auth']:
+            continue
+        said = any(r['auth'])
+        for u in r['units']:
+            auth_n += 1
+            auth_ok += said == auth_gt[u]
+    # parameter level: query/body/header parameters of ground-truth entries (path parameters live in the URL)
+    gt_params = {u: {p['name'] for e in es for p in (e.get('parameters') or []) if p.get('location') != 'path'}
+                 for u, es in app.units.items()}
+    p_tp = p_found = p_gt = 0
+    for r in matched:
+        if r['params'] is None:
+            continue
+        for u in r['units']:
+            p_found += len(r['params'])
+            p_tp += len(r['params'] & gt_params[u])
+            p_gt += len(gt_params[u])
+    param_level = None
+    if any(r['params'] is not None for r in matched):
+        param_level = {'reported': p_found, 'correct': p_tp, 'ground_truth': p_gt,
+                       'precision': round(p_tp / p_found, 4) if p_found else 0.0,
+                       'recall': round(p_tp / p_gt, 4) if p_gt else None}
+
     def breakdown(field, only_test_cases=False):
         d = defaultdict(lambda: [0, 0])
         for u, es in app.units.items():
@@ -365,6 +401,8 @@ def evaluate_app(app, findings, oracle=None, method_aware=False):
         'app': app.id,
         'path_level': {'strict': strict, 'lenient': lenient},
         'method_level': method_level,
+        'auth_accuracy': ({'checked': auth_n, 'correct': auth_ok, 'accuracy': round(auth_ok / auth_n, 4)} if auth_n else None),
+        'parameter_level': param_level,
         'counts': {
             'findings_raw': len(findings), 'endpoint_findings': len(endpoint_keys), 'asset_findings': len(asset_keys),
             'matched_findings': len(matched), 'out_of_scope': len(out_scope), 'unmatched_in_scope': len(unmatched),
@@ -429,6 +467,13 @@ def print_result(r, mode, name):
     if r['method_level']:
         m = r['method_level']
         print(f"  method level: precision {pct(m['precision'])}, recall {pct(m['recall'])}")
+    if r.get('auth_accuracy'):
+        a_ = r['auth_accuracy']
+        print(f"  auth_required accuracy {pct(a_['accuracy'])} ({a_['correct']}/{a_['checked']} matched units where the tool states it)")
+    if r.get('parameter_level'):
+        p_ = r['parameter_level']
+        print(f"  parameters (query/body): precision {pct(p_['precision'])} ({p_['correct']}/{p_['reported']}), "
+              f"recall {pct(p_['recall']) if p_['recall'] is not None else 'n/a'} ({p_['correct']}/{p_['ground_truth']})")
     print(f"  recall public {pct(r['recall_public'])} | auth-gated {pct(r['recall_authenticated'])} | test cases {pct(r['recall_test_cases'])}")
     print(f"  findings: {c['findings_raw']} raw → {c['endpoint_findings']} endpoint paths + {c['asset_findings']} assets; "
           f"{c['matched_findings']} matched, {c['real_uncurated']} real-uncurated, {c['unmatched_in_scope'] - c['real_uncurated']} unmatched, {c['out_of_scope']} out of scope")

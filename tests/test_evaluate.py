@@ -160,7 +160,8 @@ class Loaders(unittest.TestCase):
         with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False, encoding='utf-8') as f:
             json.dump({'endpoints': [{'endpoint': '/a', 'method': 'post', 'confidence_score': 70}]}, f)
         try:
-            self.assertEqual(ev.load_spabench(f.name), [{'url': '/a', 'method': 'POST', 'score': 70}])
+            self.assertEqual(ev.load_spabench(f.name), [{'url': '/a', 'method': 'POST', 'score': 70,
+                                                          'auth_required': None, 'parameters': None}])
         finally:
             os.unlink(f.name)
 
@@ -172,6 +173,32 @@ class Loaders(unittest.TestCase):
             self.assertEqual([x['url'] for x in ev.load_jsluice(f.name)], ['/a', '/b'])
         finally:
             os.unlink(f.name)
+
+
+class AuthAndParameters(unittest.TestCase):
+    def _app(self):
+        import copy
+        app = copy.deepcopy(APP)
+        app['endpoints'][0]['parameters'] = [{'name': 'department', 'location': 'query'},
+                                             {'name': 'id', 'location': 'path'}]
+        return ev.App(app)
+
+    def test_auth_accuracy_counts_only_stated_values(self):
+        app = self._app()
+        r = ev.evaluate_app(app, [{'url': '/api/users', 'method': 'GET', 'auth_required': True},
+                                  {'url': 'https://staging.internal/v2/health', 'method': 'GET', 'auth_required': True},
+                                  {'url': '/api/users/{id}', 'method': 'GET'}], oracle=None)
+        self.assertEqual(r['auth_accuracy'], {'checked': 2, 'correct': 1, 'accuracy': 0.5})
+        self.assertIsNone(ev.evaluate_app(app, [{'url': '/api/users'}], oracle=None)['auth_accuracy'])
+
+    def test_parameter_level_ignores_path_parameters(self):
+        app = self._app()
+        r = ev.evaluate_app(app, [{'url': '/api/users', 'parameters': ['department', 'bogus']}], oracle=None)
+        p = r['parameter_level']
+        self.assertEqual((p['reported'], p['correct'], p['ground_truth']), (2, 1, 1))
+        self.assertEqual(p['precision'], 0.5)
+        self.assertEqual(p['recall'], 1.0)
+        self.assertIsNone(ev.evaluate_app(app, [{'url': '/api/users'}], oracle=None)['parameter_level'])
 
 
 if __name__ == '__main__':

@@ -41,7 +41,7 @@ sys.path.insert(0, HERE)
 
 LOGIN = 'http://localhost:4001/api/auth/login'
 CREDS = {'username': 'benchadmin', 'password': 'benchpass'}
-MUST_404 = ['http://localhost:3001/no-such-api/really', 'http://localhost:3001/runtime.js',
+MUST_404 = ['http://localhost:3001/api/no-such-api/really', 'http://localhost:3001/runtime.js',
             'http://localhost:3003/assets/missing.chunk.js', 'http://localhost:3004/_nuxt/entry.js.map',
             'http://localhost:3005/_next/static/chunks/package.js']
 INTROSPECTION = '{__schema{queryType{fields{name}} mutationType{fields{name}} subscriptionType{fields{name}}}}'
